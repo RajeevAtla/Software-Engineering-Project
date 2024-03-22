@@ -46,21 +46,88 @@ function openMenu(restaurantID, callback) {
     });
 }
 
+function addItem(itemID, callback) {
+    pool.getConnection((err, connection) => {
+        if (err) {
+            callback(err, null);
+            return;
+        }
 
-function addItem(itemID){
+        const query = 'INSERT INTO items (id) VALUES (?)';
+        connection.query(query, [itemID], (error, results, fields) => {
+            connection.release();
 
+            if (error) {
+                callback(error, null);
+                return;
+            }
+
+            callback(null, results);
+        });
+    });
 }
 
-function deleteItem(itemID){
+function deleteItem(itemID, callback) {
+    pool.getConnection((err, connection) => {
+        if (err) {
+            callback(err, null);
+            return;
+        }
 
+        const query = 'DELETE FROM items WHERE id = ?';
+        connection.query(query, [itemID], (error, results, fields) => {
+            connection.release();
+
+            if (error) {
+                callback(error, null);
+                return;
+            }
+
+            callback(null, results);
+        });
+    });
 }
 
-function searchItems(itemID){
+function searchItems(itemID, callback) {
+    pool.getConnection((err, connection) => {
+        if (err) {
+            callback(err, null);
+            return;
+        }
 
+        const query = 'SELECT * FROM items WHERE id = ?';
+        connection.query(query, [itemID], (error, results, fields) => {
+            connection.release();
+
+            if (error) {
+                callback(error, null);
+                return;
+            }
+
+            callback(null, results);
+        });
+    });
 }
 
-function listItemCategories(resturantID){
+function listItemCategories(restaurantID, callback) {
+    pool.getConnection((err, connection) => {
+        if (err) {
+            callback(err, null);
+            return;
+        }
 
+        const query = 'SELECT category FROM categories WHERE restaurant_id = ?';
+        connection.query(query, [restaurantID], (error, results, fields) => {
+            connection.release();
+
+            if (error) {
+                callback(error, null);
+                return;
+            }
+
+            callback(null, results);
+        });
+    });
 }
 
 const PORT = 3000;
