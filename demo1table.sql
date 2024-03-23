@@ -72,4 +72,21 @@ INSERT INTO Restaurant (restaurantid, name, address, email, phonenumber, categor
 (1, 'Doe Pizza', '123 Main St', 'contact@doespizza.com', '555-1111', 'Italian'),
 (2, 'Smiths BBQ', '456 Market St', 'info@smithsbbq.com', '555-2222', 'American');
 
+INSERT INTO Menu (restaurantid, menuname) VALUES
+(1, 'Classic Italian'),
+(2, 'Traditional American BBQ');
+
+-- Items for Doe Pizza's Classic Italian menu
+INSERT INTO MenuItem (menuid, name, description, price) VALUES
+(1, 'Margherita Pizza', 'Classic Margherita with fresh mozzarella and basil.', 12.99),
+(1, 'Pasta Carbonara', 'Traditional carbonara with eggs, hard cheese, cured pork, and black pepper.', 15.49);
+
+-- Items for Smiths BBQ's Traditional American BBQ menu
+INSERT INTO MenuItem (menuid, name, description, price) VALUES
+(2, 'Pulled Pork Sandwich', 'Slow-cooked pulled pork with BBQ sauce on a brioche bun.', 9.99),
+(2, 'Smoked Brisket', '12-hour smoked brisket served with house BBQ sauce.', 18.99);
+
+INSERT INTO Orders (userid, restaurantid, ordertime, totalprice, orderstatus) VALUES
+(1, 1, NOW(), 28.98, 'Completed'),
+(2, 2, NOW(), 28.98, 'Pending');
 
