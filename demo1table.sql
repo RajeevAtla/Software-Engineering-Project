@@ -31,6 +31,22 @@ CREATE TABLE Restaurant (
   category VARCHAR(255) 
 );
 
+CREATE TABLE Menu (
+  menuid INT AUTO_INCREMENT PRIMARY KEY,
+  restaurantid INT UNIQUE,
+  menuname VARCHAR(255),
+  FOREIGN KEY (restaurantid) REFERENCES Restaurant(restaurantid)
+);
+
+CREATE TABLE MenuItem (
+  itemid INT AUTO_INCREMENT PRIMARY KEY,
+  menuid INT,
+  name VARCHAR(255),
+  description TEXT,
+  price DECIMAL(10,2),
+  FOREIGN KEY (menuid) REFERENCES Menu(menuid)
+);
+
 -- Now, create the Orders table with foreign key references
 CREATE TABLE Orders (
   orderid INT AUTO_INCREMENT PRIMARY KEY,
@@ -43,6 +59,10 @@ CREATE TABLE Orders (
   FOREIGN KEY (restaurantid) REFERENCES Restaurant(restaurantid)
 );
 
+
+
+
+
 -- Insert example records into the User table
 INSERT INTO User (userid, firstname, lastname, Address, email, phonenumber, password, Salt, role) VALUES
 (1, 'John', 'Doe', '1234 Main St', 'john.doe@example.com', '555-1234', 'hashedpassword', 'salt', 'customer'),
@@ -51,3 +71,5 @@ INSERT INTO User (userid, firstname, lastname, Address, email, phonenumber, pass
 INSERT INTO Restaurant (restaurantid, name, address, email, phonenumber, category) VALUES
 (1, 'Doe Pizza', '123 Main St', 'contact@doespizza.com', '555-1111', 'Italian'),
 (2, 'Smiths BBQ', '456 Market St', 'info@smithsbbq.com', '555-2222', 'American');
+
+
