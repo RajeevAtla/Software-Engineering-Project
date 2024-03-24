@@ -1,0 +1,23 @@
+{
+  "name": "software-engineering-project",
+  "version": "1.0.0",
+  "description": "Project for S.E.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RajeevAtla/Software-Engineering-Project.git"
+  },
+  "keywords": [
+    "school"
+  ],
+  "author": "me",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RajeevAtla/Software-Engineering-Project/issues"
+  },
+  "homepage": "https://github.com/RajeevAtla/Software-Engineering-Project#readme"
+}
