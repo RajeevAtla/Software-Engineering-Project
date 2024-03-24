@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 const dbConfig = {
   host: 'localhost',
   user: 'root',
-  password: 'i<3rutgers',
+  password: 'Pachu4293',
   database: 'PickupPlus'
 };
 
@@ -42,7 +42,7 @@ async function placeNewOrder(cartId, userId) {
     } finally {
       if (connection) await connection.end();
     }
-  
+    
     return orderResult[0].insertId;
   }
   
@@ -99,4 +99,81 @@ async function createAndPrintOrder(cartId, userId) {
 }
 
 // Use the function to place a new order and print its details
-createAndPrintOrder(1, 1);
+
+//check status
+async function checkStatus(orderNumber){ // fetches the order status of a specific order 
+    const connection = await mysql.createConnection(dbConfig);
+    try{
+        // fetches from the database the order status from an order with the order id request
+        const [order] = await connection.query('SELECT orderstatus FROM Orders WHERE orderid = ?', [orderNumber]);
+
+        // order with orderid not found
+        if (order.length === 0) {
+            console.log(`No order found with ID: ${orderNumber}`);
+            return;
+          }
+
+        let orderStatus = order[0].orderstatus;
+        console.log(orderStatus.split()); 
+        console.log(`Order ID: ${orderNumber} \nStatus: ${orderStatus}`);
+    }
+    catch (error) { // if there is an error
+    console.error('Error fetching order details:', error);
+    } 
+    finally {
+    // Always close the connection
+    await connection.end();
+    }
+}
+
+//update status
+
+async function updateStatus(orderNumber) { // updates the order with status 
+    const connection = await mysql.createConnection(dbConfig);
+    try {
+        // Fetches the current status of the order from the database
+        const [orders] = await connection.query('SELECT orderstatus FROM Orders WHERE orderid = ?', [orderNumber]);
+
+        // Checks if the order with the specified orderid was found
+        if (orders.length === 0) {
+            console.log(`No order found with ID: ${orderNumber}`);
+            return;
+        }
+
+        let currentStatus = orders[0].orderstatus;
+
+        // order progression
+        const statusProgression = ['Pending', 'In Progress', 'Ready', 'Completed'];
+        const currentIndex = statusProgression.indexOf(currentStatus);
+
+        // If the current status is found and not the last element in the progression array
+        if (currentIndex !== -1 && currentIndex < statusProgression.length - 1) {
+            const nextStatus = statusProgression[currentIndex + 1];
+            await connection.query('UPDATE Orders SET orderstatus = ? WHERE orderid = ?', [nextStatus, orderNumber]);
+            console.log(`Order ID: ${orderNumber} status updated from ${currentStatus} to ${nextStatus}.`);
+        } else {
+            console.log(`Order ID: ${orderNumber} is already completed`);
+        }
+    } catch (error) {
+        console.error('Error updating order status:', error);
+    } finally {
+        // Always close the connection
+        await connection.end();
+    }
+}
+
+async function test(num){ // test to see if the update status works
+    try
+    {
+        await checkStatus(4); 
+        await updateStatus(4); 
+        await checkStatus(4); 
+    }
+    catch (error) {
+        console.error('Error updating order status:', error);
+    }
+    
+}
+test(4); 
+
+//cancel order, the status is preparing or completed, throw back and error 
