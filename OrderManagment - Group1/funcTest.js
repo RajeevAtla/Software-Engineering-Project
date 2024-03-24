@@ -98,9 +98,7 @@ async function createAndPrintOrder(cartId, userId) {
   }
 }
 
-// Use the function to place a new order and print its details
 
-//check status
 async function checkStatus(orderNumber){ // fetches the order status of a specific order 
     const connection = await mysql.createConnection(dbConfig);
     try{
@@ -114,7 +112,6 @@ async function checkStatus(orderNumber){ // fetches the order status of a specif
           }
 
         let orderStatus = order[0].orderstatus;
-        console.log(orderStatus.split()); 
         console.log(`Order ID: ${orderNumber} \nStatus: ${orderStatus}`);
     }
     catch (error) { // if there is an error
@@ -126,7 +123,6 @@ async function checkStatus(orderNumber){ // fetches the order status of a specif
     }
 }
 
-//update status
 
 async function updateStatus(orderNumber) { // updates the order with status 
     const connection = await mysql.createConnection(dbConfig);
@@ -162,18 +158,37 @@ async function updateStatus(orderNumber) { // updates the order with status
     }
 }
 
-async function test(num){ // test to see if the update status works
-    try
-    {
-        await checkStatus(4); 
-        await updateStatus(4); 
-        await checkStatus(4); 
-    }
-    catch (error) {
-        console.error('Error updating order status:', error);
-    }
-    
-}
-test(4); 
+
 
 //cancel order, the status is preparing or completed, throw back and error 
+async function cancelOrder(orderNumber){
+  const connection = await mysql.createConnection(dbConfig);
+    try{
+        // fetches from the database the order status from an order with the order id request
+        const [order] = await connection.query('SELECT orderstatus FROM Orders WHERE orderid = ?', [orderNumber]);
+
+        // order with orderid not found
+        if (order.length === 0) {
+            console.log(`No order found with ID: ${orderNumber}`);
+            return;
+          }
+
+        let orderStatus = order[0].orderstatus;
+
+        if (orderStatus != 'Pending'){ // order cannot be canceled when it is not pending
+          console.log('Order with order ID ' + orderNumber + ' cannot be canceled as it is out of the Pending status stage')
+        }
+        else{
+          await connection.execute('DELETE FROM Orders WHERE orderid = ?', [orderNumber]);
+          console.log('Order with order ID ' + orderNumber + ' canceled')
+        }
+    }
+    catch (error) { // if there is an error
+    console.error('Error fetching order details:', error);
+    } 
+    finally {
+    // Always close the connection
+    await connection.end();
+    }
+
+}
