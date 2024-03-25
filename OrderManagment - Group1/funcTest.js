@@ -18,7 +18,20 @@ async function placeNewOrder(cartId, userId) {
     try {
       connection = await mysql.createConnection(dbConfig);
       await connection.beginTransaction();
-  
+      
+      // checks if the user id inputted exists
+      const [user] = await connection.query('SELECT userid FROM User WHERE userid = ?', [userId]);
+        if (user.length === 0) {
+            return 'no user'; 
+        }
+
+
+      // checks if the cart id inputted exists
+      const [cart] = await connection.query('SELECT cartid FROM Cart WHERE cartid = ?', [cartId]);
+      if (cart.length === 0) {
+          return 'no cart'; 
+      }
+
       // Calculate the total price for the order
       const [cartItems] = await connection.query(
         'SELECT ci.quantity, mi.price FROM CartItems ci JOIN MenuItem mi ON ci.itemid = mi.itemid WHERE ci.cartid = ?',
@@ -60,7 +73,7 @@ async function printOrderDetails(orderNumber) {
   
       if (orderDetails.length === 0) {
         console.log(`No order found with ID: ${orderNumber}`);
-        return;
+        return
       }
   
       const order = orderDetails[0];
@@ -137,7 +150,7 @@ async function updateStatus(orderNumber) { // updates the order with status
         // Checks if the order with the specified orderid was found
         if (orders.length === 0) {
             console.log(`No order found with ID: ${orderNumber}`);
-            return;
+            return null;
         }
 
         let currentStatus = orders[0].orderstatus;
@@ -151,8 +164,12 @@ async function updateStatus(orderNumber) { // updates the order with status
             const nextStatus = statusProgression[currentIndex + 1];
             await connection.query('UPDATE Orders SET orderstatus = ? WHERE orderid = ?', [nextStatus, orderNumber]);
             console.log(`Order ID: ${orderNumber} status updated from ${currentStatus} to ${nextStatus}.`);
-        } else {
+            return 'updated'; 
+        } 
+        else if (currentIndex == statusProgression.length - 1)
+        {
             console.log(`Order ID: ${orderNumber} is already completed`);
+            return 'completed'; 
         }
     } catch (error) {
         console.error('Error updating order status:', error);
@@ -174,17 +191,19 @@ async function cancelOrder(orderNumber){
         // order with orderid not found
         if (order.length === 0) {
             console.log(`No order found with ID: ${orderNumber}`);
-            return;
+            return null;
           }
 
         let orderStatus = order[0].orderstatus;
 
         if (orderStatus != 'Pending'){ // order cannot be canceled when it is not pending
           console.log('Order with order ID ' + orderNumber + ' cannot be canceled as it is out of the Pending status stage')
+          return 'invalid';
         }
         else{
           await connection.execute('DELETE FROM Orders WHERE orderid = ?', [orderNumber]);
           console.log('Order with order ID ' + orderNumber + ' canceled')
+          return 'canceled';
         }
     }
     catch (error) { // if there is an error
@@ -198,7 +217,7 @@ async function cancelOrder(orderNumber){
 }
 
 const hostname = '127.0.0.1';
-const port = 4001;
+const port = 4002;
 
 const server = http.createServer(async (req, res) => {
     const reqUrl = url.parse(req.url, true);
@@ -214,9 +233,21 @@ const server = http.createServer(async (req, res) => {
         req.on('end', async () => {
             try {
                 const { cartId, userId } = JSON.parse(body);
-                const orderId = await placeNewOrder(cartId, userId);
-                res.writeHead(201, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ orderId: orderId, message: 'Order created successfully' }));
+                const result = await placeNewOrder(cartId, userId);
+
+                if (result == 'no cart')
+                {
+                  res.writeHead(404, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ message: 'Cart id not found' }));
+                }
+                else if (result == 'no user'){
+                  res.writeHead(404, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ message: 'User id not found' }));
+                }
+                else {
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ orderId: result, message: 'Order created successfully' }));
+                }
             } catch (error) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Failed to create order' }));
@@ -247,9 +278,22 @@ const server = http.createServer(async (req, res) => {
         const orderNumber = pathname.split('/')[4];
         if (orderNumber) {
             try {
-                await updateStatus(orderNumber);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ message: 'Order status updated successfully' }));
+                let result = await updateStatus(orderNumber);
+                if (result == null) {
+                  // Order not found
+                  res.writeHead(404, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ error: 'Order not found' }));
+                } 
+                else if (result == 'completed'){
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ message: 'Order is already completed' }));
+                }
+                else {
+                  // Order status updated successfully
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ message: 'Order status updated successfully' }));
+              }
+  
             } catch (error) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Failed to update order status' }));
@@ -261,9 +305,19 @@ const server = http.createServer(async (req, res) => {
         const orderNumber = pathname.split('/')[3];
         if (orderNumber) {
             try {
-                await cancelOrder(orderNumber);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ message: 'Order cancelled successfully' }));
+                result = await cancelOrder(orderNumber);
+                if (result == null){
+                  res.writeHead(404, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ error: 'Order not found' }));
+                }
+                else if (result == 'invalid'){
+                  res.writeHead(500, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ error: 'Order needs to have Pending status to be canceled' }));
+                }
+                else{
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ message: 'Order cancelled successfully' }));
+                }
             } catch (error) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Failed to cancel order' }));
@@ -276,6 +330,10 @@ const server = http.createServer(async (req, res) => {
     }
 });
 
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
-});
+if (require.main === module) {
+  server.listen(port, hostname, () => {
+      console.log(`Server running at http://${hostname}:${port}/`);
+  });
+}
+
+module.exports = server;
