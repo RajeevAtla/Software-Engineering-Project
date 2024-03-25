@@ -6,7 +6,7 @@
 
 
 * group 2
-
+Working on creating local SQL database and connecting to it.
 
 * group 3 
 
