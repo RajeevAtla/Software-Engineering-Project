@@ -50,7 +50,7 @@ function registerRestaurant(req, res) {
               }
 
               res.writeHead(201, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ restaurantid: results.insertId }));
+              res.end(JSON.stringify({ restaurantid: results.insertId, message: 'Restaurant registered successfuslly.'}));
           });
       });
   });
@@ -200,4 +200,9 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+function closeConnections(){
+    db.end();
+    server.close();
+}
 
+module.exports = { server, closeConnections };
