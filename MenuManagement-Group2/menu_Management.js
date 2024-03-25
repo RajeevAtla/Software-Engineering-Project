@@ -1,8 +1,7 @@
-
-
-
-
 const http = require('http');
+const url = require('url');
+const mysql = require('mysql2/promise');
+
 
 // Start the server
 const server = http.createServer((request, response) => {
@@ -14,7 +13,21 @@ const server = http.createServer((request, response) => {
     }
 });
 
-// Initialize SQL connection
+// MySQL connection
+const db = mysql.createConnection({
+  host: 'localhost', 
+  user: 'root',
+  password: 'your_password',
+  database: 'your_db_name'
+});
+
+db.connect(err => {
+  if (err) {
+    console.error('Error connecting to database: ' + err.stack);
+    return;
+  }
+  console.log('Connected with id: ' + db.threadId);
+});
 
 
 /* Subteam 2 - Menu Requests
@@ -27,7 +40,7 @@ const server = http.createServer((request, response) => {
 */
 
 function openMenu(restaurantID, callback) {
-    pool.getConnection((err, connection) => {
+    db.getConnection((err, connection) => {
         if (err) {
             console.error("Error connecting to the database: ", err);
             callback(err, null);
@@ -51,7 +64,7 @@ function openMenu(restaurantID, callback) {
 }
 
 function addItem(itemID, callback) {
-    pool.getConnection((err, connection) => {
+    db.getConnection((err, connection) => {
         if (err) {
             callback(err, null);
             return;
@@ -72,7 +85,7 @@ function addItem(itemID, callback) {
 }
 
 function deleteItem(itemID, callback) {
-    pool.getConnection((err, connection) => {
+    db.getConnection((err, connection) => {
         if (err) {
             callback(err, null);
             return;
@@ -93,7 +106,7 @@ function deleteItem(itemID, callback) {
 }
 
 function searchItems(itemID, callback) {
-    pool.getConnection((err, connection) => {
+    db.getConnection((err, connection) => {
         if (err) {
             callback(err, null);
             return;
@@ -114,7 +127,7 @@ function searchItems(itemID, callback) {
 }
 
 function listItemCategories(restaurantID, callback) {
-    pool.getConnection((err, connection) => {
+    db.getConnection((err, connection) => {
         if (err) {
             callback(err, null);
             return;
