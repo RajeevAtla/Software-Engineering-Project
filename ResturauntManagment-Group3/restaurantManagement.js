@@ -5,6 +5,7 @@
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2');
+const bcrypt = require('bcrypt');
 
 // MySQL connection
 const db = mysql.createConnection({
@@ -23,32 +24,36 @@ db.connect(err => {
 });
 
 // creates and stores restuarant info in db
-// also doesn't really do any validation other than basic error checking
 function registerRestaurant(req, res) {
-    let body = '';
+  let body = '';
+  req.on('data', chunk => {
+      body += chunk.toString();
+  });
 
-    req.on('data', chunk => {
-        body += chunk.toString();
-    });
+  req.on('end', async () => { 
+      const {name, address, email, phonenumber, category, password} = JSON.parse(body);
 
-    req.on('end', () => {
-        const {name, address, email, phonenumber, category} = JSON.parse(body);
+      bcrypt.hash(password, 10, function(err, hashedPassword) {
+          if (err) {
+              res.writeHead(500, {'Content-Type': 'application/json'});
+              res.end(JSON.stringify({ message: "Error hashing password" }));
+              return;
+          }
 
-        // sets up restaurant, specific info to be inserted in db query
-        // restaurantid will be AUTO_INCREMENTed
-        const sql = 'INSERT INTO restaurant (name, address, email, phonenumber, category) VALUES (?, ?, ?, ?, ?)';
+          const sql = 'INSERT INTO restaurant (name, address, email, phonenumber, category, password) VALUES (?, ?, ?, ?, ?, ?)';
 
-        db.query(sql, [name, address, email, phonenumber, category], (error, results) => {
-            if (error){
-                res.writeHead(500, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
-                return;
-            }
+          db.query(sql, [name, address, email, phonenumber, category, hashedPassword], (error, results) => {
+              if (error){
+                  res.writeHead(500, {'Content-Type': 'application/json'});
+                  res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
+                  return;
+              }
 
-            res.writeHead(201, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ restaurantid: results.insertId }));
-        });
-    });
+              res.writeHead(201, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ restaurantid: results.insertId }));
+          });
+      });
+  });
 }
 // login and retrieve restaurant details using the restaurantId
 function restaurantLogin(req, res, restaurantid) {
@@ -61,8 +66,24 @@ function restaurantLogin(req, res, restaurantid) {
           return;
       }
       const restaurantDetails = results[0];
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(restaurantDetails));
+      const { password } = JSON.parse(req.headers['x-password']); 
+
+      bcrypt.compare(password, restaurantDetails.password, function(err, result) {
+          if (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ message: "Error comparing passwords" }));
+              return;
+          }
+          if (!result) {
+              res.writeHead(401, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ message: "Invalid password" }));
+              return;
+          }
+          // Return restaurant details excluding the password
+          delete restaurantDetails.password;
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(restaurantDetails));
+      });
   });
 }
 
@@ -174,8 +195,9 @@ const server = http.createServer((req, res) => {
   }
 });
 
-const PORT = 3000;
+const PORT = 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
 
