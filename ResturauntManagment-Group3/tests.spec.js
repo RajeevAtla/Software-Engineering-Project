@@ -22,10 +22,10 @@ async function setupDatabase() {
   
 beforeAll(async () => {
     testDb = await mysql.createConnection({
-        host: '127.0.0.1',
+        host: 'localhost',
         user: 'root',
-        password: 'S0ccer577223!',
-        database: 'PickupPlus'
+        password: 'your_password',
+        database: 'your_db'
     });
     setupDatabase();
 });
