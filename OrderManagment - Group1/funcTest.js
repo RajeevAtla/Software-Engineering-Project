@@ -1,10 +1,12 @@
 const mysql = require('mysql2/promise');
+const http = require('http');
+const url = require('url');
 
 // Assuming you have established a database connection
 const dbConfig = {
   host: 'localhost',
   user: 'root',
-  password: 'Pachu4293',
+  password: 'i<3rutgers',
   database: 'PickupPlus'
 };
 
@@ -44,9 +46,9 @@ async function placeNewOrder(cartId, userId) {
     }
     
     return orderResult[0].insertId;
-  }
+}
   
-  async function printOrderDetails(orderNumber) {
+async function printOrderDetails(orderNumber) {
     const connection = await mysql.createConnection(dbConfig);
   
     try {
@@ -85,7 +87,7 @@ async function placeNewOrder(cartId, userId) {
       // Always close the connection
       await connection.end();
     }
-  }
+}
   
 async function createAndPrintOrder(cartId, userId) {
   try {
@@ -99,28 +101,30 @@ async function createAndPrintOrder(cartId, userId) {
 }
 
 
-async function checkStatus(orderNumber){ // fetches the order status of a specific order 
-    const connection = await mysql.createConnection(dbConfig);
-    try{
-        // fetches from the database the order status from an order with the order id request
-        const [order] = await connection.query('SELECT orderstatus FROM Orders WHERE orderid = ?', [orderNumber]);
+async function checkStatus(orderNumber) { // fetches the order status of a specific order
+  let connection;
+  try {
+      connection = await mysql.createConnection(dbConfig);
+      // Fetches from the database the order status from an order with the order id requested
+      const [order] = await connection.query('SELECT orderstatus FROM Orders WHERE orderid = ?', [orderNumber]);
 
-        // order with orderid not found
-        if (order.length === 0) {
-            console.log(`No order found with ID: ${orderNumber}`);
-            return;
-          }
+      // Order with orderid not found
+      if (order.length === 0) {
+          console.log(`No order found with ID: ${orderNumber}`);
+          return "Order not found"; // Return a message indicating no order was found
+      }
 
-        let orderStatus = order[0].orderstatus;
-        console.log(`Order ID: ${orderNumber} \nStatus: ${orderStatus}`);
-    }
-    catch (error) { // if there is an error
-    console.error('Error fetching order details:', error);
-    } 
-    finally {
-    // Always close the connection
-    await connection.end();
-    }
+      let orderStatus = order[0].orderstatus;
+      console.log(`Order ID: ${orderNumber} \nStatus: ${orderStatus}`);
+      return orderStatus; // Return the order status to the caller
+  } catch (error) { // If there is an error
+      console.error('Error fetching order details:', error);
+      return "Error fetching order details"; // Return a message indicating an error occurred
+  } finally {
+      if (connection) {
+          await connection.end(); // Always close the connection
+      }
+  }
 }
 
 
@@ -192,3 +196,86 @@ async function cancelOrder(orderNumber){
     }
 
 }
+
+const hostname = '127.0.0.1';
+const port = 4001;
+
+const server = http.createServer(async (req, res) => {
+    const reqUrl = url.parse(req.url, true);
+    const pathname = reqUrl.pathname;
+    const method = req.method;
+
+    // Route for creating an order - POST /api/orders
+    if (pathname === '/api/orders' && method === 'POST') {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString(); // Convert Buffer to string
+        });
+        req.on('end', async () => {
+            try {
+                const { cartId, userId } = JSON.parse(body);
+                const orderId = await placeNewOrder(cartId, userId);
+                res.writeHead(201, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ orderId: orderId, message: 'Order created successfully' }));
+            } catch (error) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Failed to create order' }));
+            }
+        });
+    }
+    // Route for checking an order's status - GET /api/orders/{orderID}
+    else if (pathname.startsWith('/api/orders/') && method === 'GET') {
+      const orderNumber = pathname.split('/')[3];
+      if (orderNumber) {
+          try {
+              const status = await checkStatus(orderNumber); // Await the status from checkStatus function
+              if (status === "Order not found" || status === "Error fetching order details") {
+                  res.writeHead(404, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ error: status }));
+              } else {
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ status: status })); // Use the status in the response
+              }
+          } catch (error) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Internal server error' }));
+          }
+      }
+  }
+    // Route for updating an order's status - PUT /api/orders/notifications/{orderID}
+    else if (pathname.startsWith('/api/orders/notifications/') && method === 'PUT') {
+        const orderNumber = pathname.split('/')[4];
+        if (orderNumber) {
+            try {
+                await updateStatus(orderNumber);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ message: 'Order status updated successfully' }));
+            } catch (error) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Failed to update order status' }));
+            }
+        }
+    }
+    // Route for cancelling an order - DELETE /api/orders/{orderID}
+    else if (pathname.startsWith('/api/orders/') && method === 'DELETE') {
+        const orderNumber = pathname.split('/')[3];
+        if (orderNumber) {
+            try {
+                await cancelOrder(orderNumber);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ message: 'Order cancelled successfully' }));
+            } catch (error) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Failed to cancel order' }));
+            }
+        }
+    }
+    else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not Found' }));
+    }
+});
+
+server.listen(port, hostname, () => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+});
