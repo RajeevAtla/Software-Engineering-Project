@@ -1,13 +1,10 @@
 const http = require('http');
-const url = require('url');
 const mysql = require('mysql2/promise');
 
-// This is Abhi changing the file
-// This is Chris changing the file
-// Start the server
+//start server
 const server = http.createServer((request, response) => {
     if (request.method === 'POST') {
-        handlePostRequest(request, response);
+        handlePostRequest(request, response); 
     } else {
         response.writeHead(405); 
         response.end('Only POST method is supported');
@@ -16,136 +13,87 @@ const server = http.createServer((request, response) => {
 
 // MySQL connection
 const db = mysql.createConnection({
-  host: 'localhost', 
-  user: 'root',
-  password: 'your_password',
-  database: 'your_db_name'
+    host: 'localhost',
+    user: 'root',
+    password: 'sweteam',
+    database: 'PickupPlus'
 });
 
-db.connect(err => {
-  if (err) {
+db.then(connection => {
+    console.log('Connected with id: ' + connection.threadId);
+}).catch(err => {
     console.error('Error connecting to database: ' + err.stack);
-    return;
-  }
-  console.log('Connected with id: ' + db.threadId);
 });
 
-
-/* Subteam 2 - Menu Requests
-    - Open Menu - Get Menu from resturant ID, returns JSON
-    - Add Item to Cart - Add Item to Cart, returns confirmation text
-    - Delete Item - Deletes Item from Cart, returns confirmation text
-    - Search Items - Search for Items in Menu                                   ----- Might be removed -------
-    - List Item Categories - List all categories in Menu, returns JSON
-
-*/
-
-function openMenu(restaurantID, callback) {
-    db.getConnection((err, connection) => {
-        if (err) {
-            console.error("Error connecting to the database: ", err);
-            callback(err, null);
-            return;
-        }
-
+async function openMenu(restaurantID) {
+    try {
+        const connection = await db;
         const query = 'SELECT menu FROM restaurants WHERE id = ?';
-        connection.query(query, [restaurantID], (error, results, fields) => {
-            connection.release();
+        const [results] = await connection.query(query, [restaurantID]);
+        connection.release();
 
-            if (error) {
-                console.error("Error executing the query: ", error);
-                callback(error, null);
-                return;
-            }
-
-            let menu = results.length > 0 ? JSON.parse(results[0].menu) : null;
-            callback(null, menu);
-        });
-    });
+        let menu = results.length > 0 ? JSON.parse(results[0].menu) : null;
+        return menu;
+    } catch (err) {
+        console.error("Error in openMenu: ", err);
+        throw err;
+    }
 }
 
-function addItem(itemID, callback) {
-    db.getConnection((err, connection) => {
-        if (err) {
-            callback(err, null);
-            return;
-        }
-
+async function addItem(itemID) {
+    try {
+        const connection = await db;
         const query = 'INSERT INTO items (id) VALUES (?)';
-        connection.query(query, [itemID], (error, results, fields) => {
-            connection.release();
+        const [results] = await connection.query(query, [itemID]);
+        connection.release();
 
-            if (error) {
-                callback(error, null);
-                return;
-            }
-
-            callback(null, results);
-        });
-    });
+        return results;
+    } catch (err) {
+        console.error("Error in addItem: ", err);
+        throw err;
+    }
 }
 
-function deleteItem(itemID, callback) {
-    db.getConnection((err, connection) => {
-        if (err) {
-            callback(err, null);
-            return;
-        }
-
+async function deleteItem(itemID) {
+    try {
+        const connection = await db;
         const query = 'DELETE FROM items WHERE id = ?';
-        connection.query(query, [itemID], (error, results, fields) => {
-            connection.release();
+        const [results] = await connection.query(query, [itemID]);
+        connection.release();
 
-            if (error) {
-                callback(error, null);
-                return;
-            }
-
-            callback(null, results);
-        });
-    });
+        return results;
+    } catch (err) {
+        console.error("Error in deleteItem: ", err);
+        throw err;
+    }
 }
 
-function searchItems(itemID, callback) {
-    db.getConnection((err, connection) => {
-        if (err) {
-            callback(err, null);
-            return;
-        }
-
+async function searchItems(itemID) {
+    try {
+        const connection = await db;
         const query = 'SELECT * FROM items WHERE id = ?';
-        connection.query(query, [itemID], (error, results, fields) => {
-            connection.release();
+        const [results] = await connection.query(query, [itemID]);
+        connection.release();
 
-            if (error) {
-                callback(error, null);
-                return;
-            }
-
-            callback(null, results);
-        });
-    });
+        return results;
+    } catch (err) {
+        console.error("Error in searchItems: ", err);
+        throw err;
+    }
 }
 
-function listItemCategories(restaurantID, callback) {
-    db.getConnection((err, connection) => {
-        if (err) {
-            callback(err, null);
-            return;
-        }
-
+async function listItemCategories(restaurantID) {
+    try {
+        const connection = await db;
         const query = 'SELECT category FROM categories WHERE restaurant_id = ?';
-        connection.query(query, [restaurantID], (error, results, fields) => {
-            connection.release();
+        const [results] = await connection.query(query, [restaurantID]);
+        connection.release();
 
-            if (error) {
-                callback(error, null);
-                return;
-            }
-
-            callback(null, results);
-        });
-    });
+        return results;
+    } catch (err) {
+        console.error("Error in listItemCategories: ", err);
+        throw err;
+    }
 }
 
 const PORT = 3000;
