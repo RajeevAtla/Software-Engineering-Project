@@ -2,7 +2,7 @@ const http = require('http');
 const request = require('supertest');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
-const { server, closeConnections } = require('./rMPass.js');
+const { server, closeConnections } = require('./restaurantManagement.js');
 const fs = require('fs').promises;
 
 // Set up a test database connection
