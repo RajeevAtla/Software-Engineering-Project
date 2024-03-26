@@ -7,7 +7,7 @@ For now, please run each segment of the code from the zip files provided
 
 
 * group1
-* order creation and managment
+order creation and managment
 
 
 * group 2
