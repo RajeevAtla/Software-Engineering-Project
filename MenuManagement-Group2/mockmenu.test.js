@@ -1,4 +1,4 @@
-const { openMenu } = require('./mock_Management'); // Adjust the path to where your functions are defined
+const { openMenu } = require('./mock_Management'); 
 
 // Mock the database connection
 jest.mock('mysql2/promise', () => ({
