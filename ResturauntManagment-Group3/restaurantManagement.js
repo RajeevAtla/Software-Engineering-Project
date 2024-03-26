@@ -1,208 +1,173 @@
-//Dealing with restaurant management part of project
-//Focus on the following operations: registerRestaurant, editRestaurant, deleteRestaurant, and login
-
-
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 
-// MySQL connection
-const db = mysql.createConnection({
-  host: 'localhost', 
-  user: 'root',
-  password: 'your_password',
-  database: 'your_db_name'
-});
+let db;
+async function getDbConnection() {
+  db = await mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'your_password',
+    database: 'PickupPlus'
+  });
+  return db;
+}
 
-db.connect(err => {
-  if (err) {
-    console.error('Error connecting to database: ' + err.stack);
-    return;
-  }
-  console.log('Connected with id: ' + db.threadId);
-});
-
-// creates and stores restuarant info in db
-function registerRestaurant(req, res) {
+async function registerRestaurant(req, res) {
   let body = '';
   req.on('data', chunk => {
-      body += chunk.toString();
+    body += chunk.toString();
   });
 
-  req.on('end', async () => { 
-      const {name, address, email, phonenumber, category, password} = JSON.parse(body);
+  req.on('end', async () => {
+    const { name, address, email, phonenumber, category, password } = JSON.parse(body);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const db = await getDbConnection();
 
-      bcrypt.hash(password, 10, function(err, hashedPassword) {
-          if (err) {
-              res.writeHead(500, {'Content-Type': 'application/json'});
-              res.end(JSON.stringify({ message: "Error hashing password" }));
-              return;
-          }
+    try {
+      const [result] = await db.execute(
+        'INSERT INTO Restaurant (name, address, email, phonenumber, category, password) VALUES (?, ?, ?, ?, ?, ?)',
+        [name, address, email, phonenumber, category, hashedPassword]
+      );
 
-          const sql = 'INSERT INTO restaurant (name, address, email, phonenumber, category, password) VALUES (?, ?, ?, ?, ?, ?)';
-
-          db.query(sql, [name, address, email, phonenumber, category, hashedPassword], (error, results) => {
-              if (error){
-                  res.writeHead(500, {'Content-Type': 'application/json'});
-                  res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
-                  return;
-              }
-
-              res.writeHead(201, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ restaurantid: results.insertId, message: 'Restaurant registered successfuslly.'}));
-          });
-      });
-  });
-}
-// login and retrieve restaurant details using the restaurantId
-function restaurantLogin(req, res, restaurantid) {
-  const sql = 'SELECT * FROM Restaurant WHERE restaurantid = ?';
-
-  db.query(sql, [restaurantid], (error, results) => {
-      if (error || results.length === 0) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ message: "Restaurant not found" }));
-          return;
-      }
-      const restaurantDetails = results[0];
-      const { password } = JSON.parse(req.headers['x-password']); 
-
-      bcrypt.compare(password, restaurantDetails.password, function(err, result) {
-          if (err) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ message: "Error comparing passwords" }));
-              return;
-          }
-          if (!result) {
-              res.writeHead(401, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ message: "Invalid password" }));
-              return;
-          }
-          // Return restaurant details excluding the password
-          delete restaurantDetails.password;
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(restaurantDetails));
-      });
+      res.writeHead(201, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ restaurantId: result.insertId, message: 'Restaurant registered successfully.' }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
+    } finally {
+      await db.end();
+    }
   });
 }
 
+async function restaurantLogin(req, res, restaurantId) {
+  const db = await getDbConnection();
+  try {
+    const [results] = await db.execute(
+      'SELECT * FROM Restaurant WHERE restaurantId = ?',
+      [restaurantId]
+    );
 
-// field should contain the name of a row in the db, i.e. 'name' 'address' 'email', etc.
-function editRestaurant(req, res, restaurantid){
-    let body = '';
+    if (results.length === 0) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "Restaurant not found" }));
+      return;
+    }
 
-    req.on('data', chunk => {
-        body += chunk.toString();
-    })
+    const restaurantDetails = results[0];
+    const password = req.headers['x-password'];
 
-    req.on('end', () => {
-      const updateFields = JSON.parse(body);
-  
-      const sql = `UPDATE restaurant SET ? WHERE restaurantid = ?`;
-  
-      db.query(sql, [updateFields, restaurantid], (error, results) => {
-        if (error || results.affectedRows === 0) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ message: "Restaurant not found or update failed" }));
-          return;
-        }
-  
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message: "Restaurant updated successfully" }));
-      });
-    });
+    const match = await bcrypt.compare(password, restaurantDetails.password);
+    if (!match) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "Invalid password" }));
+      return;
+    }
+    
+    delete restaurantDetails.password;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(restaurantDetails));
+  } catch (error) {
+    console.error('Error processing request:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: "Internal server error" }));
+  } finally {
+    await db.end();
+  }
 }
 
-function getRestaurantId(req, res) {
-    let body = '';
+async function editRestaurant(req, res, restaurantId) {
+  let body = '';
+  req.on('data', chunk => {
+    body += chunk.toString();
+  });
 
-    req.on('data', chunk => {
-        body += chunk.toString();
-    });
+  req.on('end', async () => {
+    const updateFields = JSON.parse(body);
+    const db = await getDbConnection();
 
-    req.on('end', () => {
-        const { name } = JSON.parse(body);
+    const setClause = Object.keys(updateFields).map(key => `${key} = ?`).join(', ');
+    const values = Object.values(updateFields);
 
-        const sql = 'SELECT restaurantid FROM restaurant WHERE name = ?';
+    try {
+      const sql = `UPDATE Restaurant SET ${setClause} WHERE restaurantId = ?`;
+      const [results] = await db.execute(sql, [...values, restaurantId]);
 
-        db.query(sql, [name], (error, results) => {
-            if (error || results.length === 0) {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ message: "Restaurant not found" }));
-                return;
-            }
-
-            // Assuming the name is unique, return the restaurant ID
-            const restaurantId = results[0].restaurantid;
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ restaurantId }));
-        });
-    });
-}
-
-
-
-function deleteRestaurant(req, res, restaurantid){
-    const sql = 'DELETE FROM restaurant WHERE restaurantid = ?';
-
-    db.query(sql, [restaurantid], (error, results) => {
-        if (error || results.affectedRows === 0) {
+      if (results.affectedRows === 0) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message: "Restaurant not found or already removed" }));
+        res.end(JSON.stringify({ message: "Restaurant not found or update failed" }));
         return;
-        }
+      }
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message: "Restaurant removed successfully" }));
-    });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "Restaurant updated successfully" }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
+    } finally {
+      await db.end();
+    }
+  });
 }
 
-const server = http.createServer((req, res) => {
+
+async function deleteRestaurant(req, res, restaurantId) {
+  const db = await getDbConnection();
+
+  try {
+    const [results] = await db.execute(
+      'DELETE FROM Restaurant WHERE restaurantId = ?',
+      [restaurantId]
+    );
+
+    if (results.affectedRows === 0) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "Restaurant not found or already removed" }));
+      return;
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: "Restaurant removed successfully" }));
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
+  } finally {
+    await db.end();
+  }
+}
+
+const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const path = parsedUrl.pathname;
   const method = req.method;
 
-  // Extract restaurantid for routes that include it
-    const matchRestaurantId = path.match(/^\/api\/restaurants\/([0-9a-zA-Z]+)(\/.*)?$/);
-    const restaurantid = matchRestaurantId ? matchRestaurantId[1] : null;
+  const matchRestaurantId = path.match(/^\/api\/restaurants\/(\d+)$/);
+  const restaurantId = matchRestaurantId ? matchRestaurantId[1] : null;
 
-  // Routing
   if (path === "/api/restaurants" && method === "POST") {
-    // Register Restaurant, request should include name, address, email, phonenumber, and category
     registerRestaurant(req, res);
-  } 
-  else if (path === `/api/restaurants/${restaurantid}` && method === "GET") {
-    // Restaurant Login
-    restaurantLogin(req, res, restaurantid);
-  } 
-  else if (path === "/api/restaurants" && method === "GET") {
-    // Get Restaurant ID, requires name JSON object in request
-    getRestaurantId(req, res);
-  } 
-  else if (path === `/api/restaurants/${restaurantid}` && method === "PUT") {
-    // Edit Restaurant
-    editRestaurant(req, res, restaurantid);
-  } 
-  else if (path === `/api/restaurants/${restaurantid}` && method === "DELETE") {
-    // Delete Restaurant
-    deleteRestaurant(req, res, restaurantid);
-  } 
-  else {
+  } else if (restaurantId && method === "GET") {
+    restaurantLogin(req, res, restaurantId);
+  } else if (restaurantId && method === "PUT") {
+    editRestaurant(req, res, restaurantId);
+  } else if (restaurantId && method === "DELETE") {
+    deleteRestaurant(req, res, restaurantId);
+  } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ message: "Not Found" }));
   }
 });
 
-const PORT = 3001;
+const PORT = 302;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
 function closeConnections(){
-    db.end();
-    server.close();
+  db.end();
+  server.close();
 }
 
 module.exports = { server, closeConnections };
