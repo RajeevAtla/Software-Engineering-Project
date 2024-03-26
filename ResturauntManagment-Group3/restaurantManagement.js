@@ -4,7 +4,7 @@
 
 const http = require('http');
 const url = require('url');
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 
 // MySQL connection
