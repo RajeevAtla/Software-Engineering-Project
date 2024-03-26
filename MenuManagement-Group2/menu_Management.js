@@ -35,7 +35,7 @@ async function openMenu(restaurantID) {
 async function addItem(itemID) {
     try {
         const connection = await db;
-        const query = 'INSERT INTO items (id) VALUES (?)';
+        const query = 'INSERT INTO MenuItem (id) VALUES (?)';
         const [results] = await connection.query(query, [itemID]);
         connection.release();
 
@@ -49,7 +49,7 @@ async function addItem(itemID) {
 async function deleteItem(itemID) {
     try {
         const connection = await db;
-        const query = 'DELETE FROM items WHERE id = ?';
+        const query = 'DELETE FROM MenuItem WHERE id = ?';
         const [results] = await connection.query(query, [itemID]);
         connection.release();
 
@@ -63,7 +63,7 @@ async function deleteItem(itemID) {
 async function searchItems(itemID) {
     try {
         const connection = await db;
-        const query = 'SELECT * FROM items WHERE id = ?';
+        const query = 'SELECT * FROM MenuItem WHERE id = ?';
         const [results] = await connection.query(query, [itemID]);
         connection.release();
 
