@@ -2,7 +2,7 @@ const http = require('http');
 const request = require('supertest');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
-const { server, closeConnections } = require('./rMPass.js');
+const { server, closeConnections } = require('./userChoice.js');
 const fs = require('fs').promises;
 
 // Set up a test database connection
@@ -21,10 +21,10 @@ async function setupDatabase() {
   
 beforeAll(async () => {
     testDb = await mysql.createConnection({
-        host: 'localhost',
+        host: 'localhost', 
         user: 'root',
-        password: 'your_password',
-        database: 'your_db'
+        password: 'your_pass',
+        database: 'PickupPlus'
     });
     setupDatabase();
 });
@@ -44,64 +44,48 @@ describe('Testing User Account functions', () => {
         const response = await request(server)
             .post('/api/users')
             .send({
-                name: "Test User",
-                address: "123 Test Street",
+                firstname: "Test",
+                lastname: "User",
+                address: "456 Test Street",
                 email: "test@example.com",
                 phonenumber: "123-456-7890",
-                category: "Test Category",
                 password: "testpassword"
             });
 
-        expect(response.statusCode).toBe(200);
-        expect(response.body.message).toBe('User registered successfully.');
+        expect(response.statusCode).toBe(201);
+        expect(response.body.message).toBe('user registered successfully.');
 
         // verify that changes were actually made to db
-        const [user] = await testDb.query('SELECT * FROM user WHERE name = ?', ["Test User"]);
+        const [user] = await testDb.query('SELECT * FROM user WHERE firstname = ?', ["Test"]);
         expect(user.length).toBeGreaterThan(0);
         
     });
 
-    it ('should store missing values as NULL when registering a user', async () => {
-        const response = await request(server)
-            .post('/api/users')
-            .send({
-                name: "Another test user",
-                email: "test@example.com",
-                phonenumber: "123-456-7890",
-                category: "Test Category",
-                password: "testpassword"
-            });
-
-            expect(response.status).toBe(200);
-            const [userid] = await testDb.query('SELECT userid FROM user WHERE name = ?', ["Another test user"]);
-            const [address] = await testDb.query('SELECT address FROM user WHERE userid = ?', [userid[0].userid]);
-            expect(address[0].address).toEqual(null);
-
-    });
 
     it ('should login to previously created account', async () => {
         const response = await request(server)
-            .get('/api/users/3')
+            .get('/api/users/1')
             .set('Content-Type', 'application/json')
             .set('x-password', JSON.stringify({"password": "example_pass"}));
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual({
-            restaurantid: expect.any(Number),
-            name: "John",
-            address: "99 test avenue",
-            email: "johncena@gmail.com",
-            phonenumber: "555-5678",
-            category: "Male"
+            userid: expect.any(Number),
+            firstname: "Jane",
+            address: "123 Elm Street",
+            email: "jane.doe@example.com",
+            phonenumber: "555-1234",
+            lastname: "Doe",
+            role: "customer"
         });
     });
     
     it('should remove an existing user', async () => {
         const response = await request(server)
-            .delete('/api/users/4');
+            .delete('/api/users/2');
         
         expect(response.status).toBe(200);
-        expect(response.body).toEqual({message: "User removed successfully"});
+        expect(response.body).toEqual({message: "user removed successfully"});
 
     });
 
@@ -114,7 +98,7 @@ describe('Testing User Account functions', () => {
             });
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual({message: "Account updated successfully"});
+            expect(response.body).toEqual({message: "user updated successfully"});
 
             // make sure that field is actually edited in db
             const [address] = await testDb.query('SELECT address FROM user WHERE userid = 1');
@@ -154,12 +138,12 @@ describe('Testing User Account functions', () => {
         const response = await request(server)
             .get('/api/users/10'); //invalid user id 10
         expect(response.statusCode).toBe(404);
-        expect(response.body.message).toBe('User not found');
+        expect(response.body.message).toBe('user not found');
     });
 
     it('should return an error when trying to login without proper password header', async () => {
         const response = await request(server)
-            .get('/api/users/3')
+            .get('/api/users/1')
             .set('Content-Type', 'application/json')
             .set('x-password', JSON.stringify({"passwurd": "example_pass"})); //incorrect spelling on password field
 
@@ -169,7 +153,7 @@ describe('Testing User Account functions', () => {
 
     it('should return an error when trying to login with an incorrect password', async () => {
         const response = await request(server)
-            .get('/api/users/3')
+            .get('/api/users/1')
             .set('Content-Type', 'application/json')
             .set('x-password', JSON.stringify({"password": "incorrect_password"})); 
 
@@ -185,7 +169,7 @@ describe('Testing User Account functions', () => {
             });
 
             expect(response.status).toBe(404);
-            expect(response.body).toEqual({message: "User not found or update failed"});
+            expect(response.body).toEqual({message: "user not found or update failed"});
 
     });
 
@@ -198,7 +182,7 @@ describe('Testing User Account functions', () => {
             });
 
             expect(response.status).toBe(404);
-            expect(response.body).toEqual({message: "User not found or update failed"});
+            expect(response.body).toEqual({message: "user not found or update failed"});
 
     });
 
@@ -208,7 +192,7 @@ describe('Testing User Account functions', () => {
             
 
             expect(response.status).toBe(404);
-            expect(response.body).toEqual({message: "User not found or already removed"});
+            expect(response.body).toEqual({message: "user not found or already removed"});
 
     });
 
