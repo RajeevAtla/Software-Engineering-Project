@@ -3,12 +3,12 @@ const url = require('url');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 
-
+let db;
 async function getDbConnection() {
-  const db = await mysql.createConnection({
+  db = await mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'GenericPassword1$',
+    password: 'your_password',
     database: 'PickupPlus'
   });
   return db;
@@ -93,12 +93,17 @@ async function editRestaurant(req, res, restaurantId) {
 
     try {
       const sql = `UPDATE Restaurant SET ${setClause} WHERE restaurantId = ?`;
-      await db.execute(sql, [...values, restaurantId]);
+      const [results] = await db.execute(sql, [...values, restaurantId]);
+
+      if (results.affectedRows === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: "Restaurant not found or update failed" }));
+        return;
+      }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: "Restaurant updated successfully" }));
     } catch (error) {
-      console.error('Error updating restaurant details:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
     } finally {
@@ -112,10 +117,16 @@ async function deleteRestaurant(req, res, restaurantId) {
   const db = await getDbConnection();
 
   try {
-    await db.execute(
+    const [results] = await db.execute(
       'DELETE FROM Restaurant WHERE restaurantId = ?',
       [restaurantId]
     );
+
+    if (results.affectedRows === 0) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "Restaurant not found or already removed" }));
+      return;
+    }
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ message: "Restaurant removed successfully" }));
@@ -154,3 +165,9 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+function closeConnections(){
+  db.end();
+  server.close();
+}
+
+module.exports = { server, closeConnections };
