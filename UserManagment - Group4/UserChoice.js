@@ -11,8 +11,8 @@ const bcrypt = require('bcrypt');
 const db = mysql.createConnection({
   host: 'localhost', 
   user: 'root',
-  password: 'your_password',
-  database: 'your_db_name'
+  password: 'your_pass',
+  database: 'PickupPlus'
 });
 
 db.connect(err => {
@@ -31,7 +31,7 @@ function registerUser(req, res) {
   });
 
   req.on('end', async () => { 
-      const {name, address, email, phonenumber, category, password} = JSON.parse(body);
+      const {firstname,lastname, address, email, phonenumber, password} = JSON.parse(body);
 
       bcrypt.hash(password, 10, function(err, hashedPassword) {
           if (err) {
@@ -40,9 +40,9 @@ function registerUser(req, res) {
               return;
           }
 
-          const sql = 'INSERT INTO user (name, address, email, phonenumber, category, password) VALUES (?, ?, ?, ?, ?, ?)';
+          const sql = 'INSERT INTO user (firstname, lastname, address, email, phonenumber, password) VALUES (?, ?, ?, ?, ?, ?)';
 
-          db.query(sql, [name, address, email, phonenumber, category, hashedPassword], (error, results) => {
+          db.query(sql, [firstname, lastname, address, email, phonenumber, hashedPassword], (error, results) => {
               if (error){
                   res.writeHead(500, {'Content-Type': 'application/json'});
                   res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
@@ -50,7 +50,7 @@ function registerUser(req, res) {
               }
 
               res.writeHead(201, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ userid: results.insertId }));
+              res.end(JSON.stringify({ userid: results.insertId, message: 'user registered successfully.' }));
           });
       });
   });
@@ -170,7 +170,7 @@ const server = http.createServer((req, res) => {
 
   // Routing
   if (path === "/api/users" && method === "POST") {
-    // Register user, request should include name, address, email, phonenumber, and category
+    // Register user, request should include name, address, email, phonenumber, category, and password
     registerUser(req, res);
   } 
   else if (path === `/api/users/${userid}` && method === "GET") {
@@ -200,3 +200,9 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+function closeConnections(){
+    db.end();
+    server.close();
+  }
+  
+module.exports = { server, closeConnections };
