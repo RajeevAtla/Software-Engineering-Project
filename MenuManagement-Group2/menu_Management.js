@@ -3,88 +3,87 @@ const mysql = require('mysql2/promise');
 const url = require('url');
 
 //connect to mySQL
-const db = mysql.createConnection({
+const db = {
     host: 'localhost',
-    user: 'root', //To other teams viewing this file, change this name accordingly to run
+    user: 'root', //To other teams viewing `this` file, change this name accordingly to run
     password: 'sweteam', //To other teams viewing this file, change this name accordingly to run
     database: 'PickupPlus'
-});
-
-db.then(connection => {
-    console.log('Connected with id: ' + connection.threadId);
-}).catch(err => {
-    console.error('Error connecting to database: ' + err.stack);
-});
+};
 
 //openMenu function. Function should open menu based on the restaurantID. 
 async function openMenu(restaurantID) {
+    let connection;
     try {
-        const connection = await db;
+        connection = await mysql.createConnection(db);
         const query = 'SELECT * FROM MenuItem WHERE restaurantid = ?';
         const [results] = await connection.query(query, [restaurantID]);
-        connection.release();
-
         let menu = results.length > 0 ? JSON.parse(results[0].menu) : null;
         return menu;
     } catch (err) {
         console.error("Error in openMenu: ", err);
         throw err;
+    } finally {
+        if (connection) connection.end();
     }
 }
 
 async function addItem(itemID) {
+    let connection;
     try {
-        const connection = await db;
+        connection = await pool.getConnection();
         const query = 'INSERT INTO MenuItem (id) VALUES (?)';
         const [results] = await connection.query(query, [itemID]);
-        connection.release();
-
         return results;
     } catch (err) {
         console.error("Error in addItem: ", err);
         throw err;
+    } finally {
+        if (connection) connection.release();
     }
 }
 
 async function deleteItem(itemID) {
+    let connection;
     try {
-        const connection = await db;
+        connection = await pool.getConnection();
         const query = 'DELETE FROM MenuItem WHERE id = ?';
         const [results] = await connection.query(query, [itemID]);
-        connection.release();
-
         return results;
     } catch (err) {
         console.error("Error in deleteItem: ", err);
         throw err;
+    } finally {
+        if (connection) connection.release();
     }
 }
 
 async function searchItems(itemID) {
+    let connection;
     try {
-        const connection = await db;
+        connection = await pool.getConnection();
         const query = 'SELECT * FROM MenuItem WHERE id = ?';
         const [results] = await connection.query(query, [itemID]);
-        connection.release();
-
         return results;
     } catch (err) {
         console.error("Error in searchItems: ", err);
         throw err;
+    } finally {
+        if (connection) connection.release();
     }
 }
 
 async function listItemCategories(restaurantID) {
+    let connection;
     try {
-        const connection = await db;
+        connection = await pool.getConnection();
         const query = 'SELECT category FROM categories WHERE restaurant_id = ?';
         const [results] = await connection.query(query, [restaurantID]);
-        connection.release();
-
         return results;
     } catch (err) {
         console.error("Error in listItemCategories: ", err);
         throw err;
+    } finally {
+        if (connection) connection.release();
     }
 }
 
@@ -152,10 +151,12 @@ const server = http.createServer(async (request, response) => {
     }
 });
 
-
+const hostname = '127.0.0.1';
 const PORT = 3000;
-server.listen(PORT, () => {
+server.listen(PORT, hostname, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+
 
 module.exports = server;
