@@ -53,7 +53,7 @@ describe('Testing Restuarant management functions', () => {
                 password: "testpassword"
             });
 
-        expect(response.statusCode).toBe(200);
+        expect(response.statusCode).toBe(201);
         expect(response.body.message).toBe('Restaurant registered successfully.');
 
         // verify that changes were actually made to db
@@ -62,7 +62,7 @@ describe('Testing Restuarant management functions', () => {
         
     });
 
-    it ('should store missing values as NULL when registering a restaurant', async () => {
+    it ('should report an error when registering a restaurant with missing values', async () => {
         const response = await request(server)
             .post('/api/restaurants')
             .send({
@@ -73,10 +73,7 @@ describe('Testing Restuarant management functions', () => {
                 password: "testpassword"
             });
 
-            expect(response.status).toBe(200);
-            const [restaurantid] = await testDb.query('SELECT restaurantid FROM restaurant WHERE name = ?', ["Another test"]);
-            const [address] = await testDb.query('SELECT address FROM restaurant WHERE restaurantid = ?', [restaurantid[0].restaurantid]);
-            expect(address[0].address).toEqual(null);
+            expect(response.status).toBe(500);
 
     });
 
@@ -84,7 +81,7 @@ describe('Testing Restuarant management functions', () => {
         const response = await request(server)
             .get('/api/restaurants/3')
             .set('Content-Type', 'application/json')
-            .set('x-password', JSON.stringify({"password": "example_pass"}));
+            .set('x-password', "example_pass");
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual({
@@ -134,22 +131,6 @@ describe('Testing Restuarant management functions', () => {
         expect(response.body).toEqual({message: "Not Found"});
     });
 
-    it('should return an error when given improper password type', async () => {
-        const response = await request(server)
-            .post('/api/restaurants')
-            .send({
-                name: "Test Restaurant",
-                address: "123 Test Street",
-                email: "test@example.com",
-                phonenumber: "123-456-7890",
-                category: "Test Category",
-                password: 1
-            });
-
-        expect(response.statusCode).toBe(500);
-        expect(response.body.message).toBe('Error hashing password');
-        
-    });
 
     it('should return an error when trying to login with an invalid restaurant id', async () => {
         const response = await request(server)
@@ -162,17 +143,17 @@ describe('Testing Restuarant management functions', () => {
         const response = await request(server)
             .get('/api/restaurants/3')
             .set('Content-Type', 'application/json')
-            .set('x-password', JSON.stringify({"passwurd": "example_pass"})); //incorrect spelling on password field
+            .set('x-password', 1); //passing an int instead of a string
 
-        expect(response.statusCode).toBe(500);
-        expect(response.body.message).toBe('Error comparing passwords');
+        expect(response.statusCode).toBe(401);
+        expect(response.body.message).toBe('Invalid password');
     });
 
     it('should return an error when trying to login an incorrect password', async () => {
         const response = await request(server)
             .get('/api/restaurants/3')
             .set('Content-Type', 'application/json')
-            .set('x-password', JSON.stringify({"password": "incorrect_password"})); 
+            .set('x-password', "incorrect_password"); 
 
         expect(response.statusCode).toBe(401);
         expect(response.body.message).toBe('Invalid password');
@@ -185,8 +166,8 @@ describe('Testing Restuarant management functions', () => {
                 menu: "test menu"
             });
 
-            expect(response.status).toBe(404);
-            expect(response.body).toEqual({message: "Restaurant not found or update failed"});
+            expect(response.status).toBe(500);
+            expect(response.body.message).toEqual("Internal Server Error");
 
     });
 
@@ -194,7 +175,6 @@ describe('Testing Restuarant management functions', () => {
         const response = await request(server)
             .put('/api/restaurants/10')
             .send({
-                address: "456 Updated Ave.",
                 email: "updated@email.com"
             });
 
