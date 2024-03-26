@@ -1,0 +1,13 @@
+For testing subgroup 3 (tests in "tests.spec.js"):
+
+make sure all dependencies are installed (http, supertest, fs, mysqp2/promise, bcrypt, fs.promises)
+to install, type in terminal:
+
+$ npm install <dependency_to_install>
+
+This is assuming you already have node.js installed.
+To run the tests, install jest, using the same method, and once installed type:
+
+$ npx jest tests.spec.js
+
+npx designates that jest is installed locally, if you have it installed globally than you can ignore that part.
