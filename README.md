@@ -12,4 +12,4 @@ Working on creating local SQL database and connecting to it.
 
 
 * group 4 
-database infrastructure
+database infrastructure (aws mysql)

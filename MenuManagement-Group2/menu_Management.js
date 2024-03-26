@@ -3,27 +3,32 @@ const mysql = require('mysql2/promise');
 const url = require('url');
 
 //connect to mySQL
-const db = {
+// Connection pool configuration
+const pool = mysql.createPool({
     host: 'localhost',
-    user: 'root', //To other teams viewing `this` file, change this name accordingly to run
-    password: 'sweteam', //To other teams viewing this file, change this name accordingly to run
-    database: 'PickupPlus'
-};
+    user: 'root',
+    password: 'i<3rutgers',
+    database: 'PickupPlus',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
 
 //openMenu function. Function should open menu based on the restaurantID. 
 async function openMenu(restaurantID) {
     let connection;
     try {
-        connection = await mysql.createConnection(db);
+        connection = await pool.getConnection(); // Get a connection from the pool
         const query = 'SELECT * FROM MenuItem WHERE restaurantid = ?';
         const [results] = await connection.query(query, [restaurantID]);
-        let menu = results.length > 0 ? JSON.parse(results[0].menu) : null;
-        return menu;
+
+        // Assuming results is an array of menu items, we return it directly.
+        return results; // Directly return the array of menu items.
     } catch (err) {
         console.error("Error in openMenu: ", err);
         throw err;
     } finally {
-        if (connection) connection.end();
+        if (connection) connection.release(); // Release the connection back to the pool
     }
 }
 
@@ -88,66 +93,41 @@ async function listItemCategories(restaurantID) {
 }
 
 const server = http.createServer(async (request, response) => {
-    // Parsing the URL
-    const parsedUrl = url.parse(request.url, true);
-    const pathname = parsedUrl.pathname;
-    const query = parsedUrl.query;
+    const parsedUrl = url.parse(request.url, true); // Parse the URL of the request
+    const pathname = parsedUrl.pathname; // Get the pathname of the request
+    const query = parsedUrl.query; // Extract the query string as an object
 
-    // Set response header for JSON
+    // Set the response header for JSON content
     response.setHeader('Content-Type', 'application/json');
 
-    // Handling different API endpoints
-    try {
-        switch (pathname) {
-            case '/menu':
-                if (request.method === 'GET') {
-                    const restaurantID = query.restaurantID;
+    if (pathname === '/menu') {
+        if (request.method === 'GET') {
+            // Make sure to declare and initialize restaurantID from query parameters
+            const restaurantID = query.restaurantID; // Correctly obtain restaurantID from query
+
+            if (restaurantID) { // Ensure restaurantID is provided
+                try {
                     const menu = await openMenu(restaurantID);
                     response.end(JSON.stringify(menu));
-                } else {
-                    response.statusCode = 405;
-                    response.end(JSON.stringify({ error: 'Method not allowed' }));
+                } catch (error) {
+                    // Handle errors from openMenu, including database connection issues
+                    response.statusCode = 500;
+                    response.end(JSON.stringify({ error: error.message }));
                 }
-                break;
-
-            case '/item':
-                if (request.method === 'POST') {
-                    const itemID = query.itemID;
-                    const result = await addItem(itemID);
-                    response.end(JSON.stringify(result));
-                } else if (request.method === 'DELETE') {
-                    const itemID = query.itemID;
-                    const result = await deleteItem(itemID);
-                    response.end(JSON.stringify(result));
-                } else if (request.method === 'GET') {
-                    const itemID = query.itemID;
-                    const result = await searchItems(itemID);
-                    response.end(JSON.stringify(result));
-                } else {
-                    response.statusCode = 405;
-                    response.end(JSON.stringify({ error: 'Method not allowed' }));
-                }
-                break;
-
-            case '/categories':
-                if (request.method === 'GET') {
-                    const restaurantID = query.restaurantID;
-                    const categories = await listItemCategories(restaurantID);
-                    response.end(JSON.stringify(categories));
-                } else {
-                    response.statusCode = 405;
-                    response.end(JSON.stringify({ error: 'Method not allowed' }));
-                }
-                break;
-
-            default:
-                response.statusCode = 404;
-                response.end(JSON.stringify({ error: 'Not found' }));
-                break;
+            } else {
+                // Respond with an error if restaurantID wasn't provided
+                response.statusCode = 400; // Bad Request
+                response.end(JSON.stringify({ error: "Missing restaurantID parameter" }));
+            }
+        } else {
+            // Handle unsupported methods for the /menu endpoint
+            response.statusCode = 405; // Method Not Allowed
+            response.end(JSON.stringify({ error: 'Method not allowed' }));
         }
-    } catch (error) {
-        response.statusCode = 500;
-        response.end(JSON.stringify({ error: error.message }));
+    } else {
+        // Handle requests to unsupported endpoints
+        response.statusCode = 404; // Not Found
+        response.end(JSON.stringify({ error: 'Not found' }));
     }
 });
 
