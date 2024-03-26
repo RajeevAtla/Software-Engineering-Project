@@ -1,6 +1,6 @@
 const http = require('http');
 const mysql = require('mysql2/promise');
-
+const url = require('url');
 
 //connect to mySQL
 const db = mysql.createConnection({
@@ -20,7 +20,7 @@ db.then(connection => {
 async function openMenu(restaurantID) {
     try {
         const connection = await db;
-        const query = 'SELECT menu FROM restaurants WHERE id = ?';
+        const query = 'SELECT * FROM MenuItem WHERE restaurantid = ?';
         const [results] = await connection.query(query, [restaurantID]);
         connection.release();
 
@@ -32,7 +32,6 @@ async function openMenu(restaurantID) {
     }
 }
 
-//addItem function that adds items to the cart 
 async function addItem(itemID) {
     try {
         const connection = await db;
@@ -47,7 +46,6 @@ async function addItem(itemID) {
     }
 }
 
-//deleteItem function that deletes items from the cart
 async function deleteItem(itemID) {
     try {
         const connection = await db;
@@ -62,7 +60,6 @@ async function deleteItem(itemID) {
     }
 }
 
-//searchItems function that searches items based on name/ID
 async function searchItems(itemID) {
     try {
         const connection = await db;
@@ -77,7 +74,6 @@ async function searchItems(itemID) {
     }
 }
 
-//listItemCategories function that lists different item categories inside of given restaurantID
 async function listItemCategories(restaurantID) {
     try {
         const connection = await db;
