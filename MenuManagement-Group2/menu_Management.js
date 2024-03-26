@@ -1,15 +1,6 @@
 const http = require('http');
 const mysql = require('mysql2/promise');
 
-//start server
-const server = http.createServer((request, response) => {
-    if (request.method === 'POST') {
-        handlePostRequest(request, response); // 
-    } else {
-        response.writeHead(405); 
-        response.end('Only POST method is supported');
-    }
-});
 
 //connect to mySQL
 const db = mysql.createConnection({
@@ -100,6 +91,71 @@ async function listItemCategories(restaurantID) {
         throw err;
     }
 }
+
+const server = http.createServer(async (request, response) => {
+    // Parsing the URL
+    const parsedUrl = url.parse(request.url, true);
+    const pathname = parsedUrl.pathname;
+    const query = parsedUrl.query;
+
+    // Set response header for JSON
+    response.setHeader('Content-Type', 'application/json');
+
+    // Handling different API endpoints
+    try {
+        switch (pathname) {
+            case '/menu':
+                if (request.method === 'GET') {
+                    const restaurantID = query.restaurantID;
+                    const menu = await openMenu(restaurantID);
+                    response.end(JSON.stringify(menu));
+                } else {
+                    response.statusCode = 405;
+                    response.end(JSON.stringify({ error: 'Method not allowed' }));
+                }
+                break;
+
+            case '/item':
+                if (request.method === 'POST') {
+                    const itemID = query.itemID;
+                    const result = await addItem(itemID);
+                    response.end(JSON.stringify(result));
+                } else if (request.method === 'DELETE') {
+                    const itemID = query.itemID;
+                    const result = await deleteItem(itemID);
+                    response.end(JSON.stringify(result));
+                } else if (request.method === 'GET') {
+                    const itemID = query.itemID;
+                    const result = await searchItems(itemID);
+                    response.end(JSON.stringify(result));
+                } else {
+                    response.statusCode = 405;
+                    response.end(JSON.stringify({ error: 'Method not allowed' }));
+                }
+                break;
+
+            case '/categories':
+                if (request.method === 'GET') {
+                    const restaurantID = query.restaurantID;
+                    const categories = await listItemCategories(restaurantID);
+                    response.end(JSON.stringify(categories));
+                } else {
+                    response.statusCode = 405;
+                    response.end(JSON.stringify({ error: 'Method not allowed' }));
+                }
+                break;
+
+            default:
+                response.statusCode = 404;
+                response.end(JSON.stringify({ error: 'Not found' }));
+                break;
+        }
+    } catch (error) {
+        response.statusCode = 500;
+        response.end(JSON.stringify({ error: error.message }));
+    }
+});
+
 
 const PORT = 3000;
 server.listen(PORT, () => {
