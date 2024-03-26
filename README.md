@@ -2,7 +2,7 @@
 
 ## what each group is working on
 
-* group1
+* group1 order creation and managment
 
 
 * group 2
