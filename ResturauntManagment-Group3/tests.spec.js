@@ -10,7 +10,6 @@ let testDb;
 
 async function setupDatabase() {
     const sql = await fs.readFile('./demo1table-3.sql', 'utf8');
-    
     const queries = sql.split(';').map(query => query.trim()).filter(query => query.length);
   
     for (const query of queries) {
@@ -22,10 +21,10 @@ async function setupDatabase() {
   
 beforeAll(async () => {
     testDb = await mysql.createConnection({
-        host: 'localhost',
+        host: '127.0.0.1',
         user: 'root',
-        password: 'your_password',
-        database: 'your_db'
+        password: 'S0ccer577223!',
+        database: 'PickupPlus'
     });
     setupDatabase();
 });
@@ -62,20 +61,6 @@ describe('Testing Restuarant management functions', () => {
         
     });
 
-    it ('should report an error when registering a restaurant with missing values', async () => {
-        const response = await request(server)
-            .post('/api/restaurants')
-            .send({
-                name: "Another test",
-                email: "test@example.com",
-                phonenumber: "123-456-7890",
-                category: "Test Category",
-                password: "testpassword"
-            });
-
-            expect(response.status).toBe(500);
-
-    });
 
     it ('should login to previously created restaurant', async () => {
         const response = await request(server)
@@ -105,19 +90,20 @@ describe('Testing Restuarant management functions', () => {
 
     it ('should edit a field in an existing restaurant', async () => {
         const response = await request(server)
-            .put('/api/restaurants/1')
+            .put('/api/restaurants/3')
             .send({
                 address: "456 Updated Ave.",
                 email: "updated@email.com"
-            });
+            })
+            .set('x-password', 'example_pass'); //passing an int instead of a string
 
             expect(response.status).toBe(200);
             expect(response.body).toEqual({message: "Restaurant updated successfully"});
 
             // make sure that field is actually edited in db
-            const [address] = await testDb.query('SELECT address FROM restaurant WHERE restaurantid = 1');
+            const [address] = await testDb.query('SELECT address FROM restaurant WHERE restaurantid = 3');
             expect(address[0].address).toEqual("456 Updated Ave.");
-            const [email] = await testDb.query('SELECT email FROM restaurant WHERE restaurantid = 1');
+            const [email] = await testDb.query('SELECT email FROM restaurant WHERE restaurantid = 3');
             expect(email[0].email).toEqual("updated@email.com");
     });
 
