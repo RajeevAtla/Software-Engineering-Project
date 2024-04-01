@@ -13,7 +13,7 @@ DROP TABLE IF EXISTS User;
 
 -- Recreate tables with the new schema
 CREATE TABLE User (
-  userid INT PRIMARY KEY, 
+  userid INT AUTO_INCREMENT PRIMARY KEY , 
   firstname VARCHAR(255),
   lastname VARCHAR(255), 
   address VARCHAR(255),
@@ -25,12 +25,13 @@ CREATE TABLE User (
 );
 
 CREATE TABLE Restaurant (
-  restaurantid INT PRIMARY KEY,
+  restaurantid INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255),
   address VARCHAR(255),
   email VARCHAR(255),
   phonenumber VARCHAR(255),
-  category VARCHAR(255) 
+  category VARCHAR(255), 
+  password VARCHAR(255)
 );
 
 CREATE TABLE MenuItem (
@@ -98,3 +99,5 @@ INSERT INTO CartItems (cartid, itemid, quantity) VALUES
 
 INSERT INTO Orders (cartid, userid, ordertime, orderstatus) VALUES
 (1, 1, NOW(), 'Pending');
+
+
