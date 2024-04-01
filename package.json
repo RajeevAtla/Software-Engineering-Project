@@ -1,27 +1,19 @@
 {
-  "name": "software-engineering-project",
+  "name": "demo-1",
   "version": "1.0.0",
-  "description": "Project for S.E.",
-  "main": "server.js",
+  "description": "",
+  "main": "funcTest.js",
   "scripts": {
-    "test": "jest",
-    "start": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/RajeevAtla/Software-Engineering-Project.git"
-  },
-  "keywords": [
-    "school"
-  ],
-  "author": "me",
+  "keywords": [],
+  "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/RajeevAtla/Software-Engineering-Project/issues"
+  "devDependencies": {
+    "supertest": "^6.3.4"
   },
-  "homepage": "https://github.com/RajeevAtla/Software-Engineering-Project#readme",
   "dependencies": {
-    "jasmine": "^5.1.0",
+    "bcrypt": "^5.1.1",
     "mysql2": "^3.9.2"
   }
 }
