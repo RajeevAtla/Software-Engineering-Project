@@ -20,7 +20,7 @@ db.connect(err => {
     console.error('Error connecting to database: ' + err.stack);
     return;
   }
-  console.log('Connected with id: ' + db.threadId);
+  //console.log('Connected with id: ' + db.threadId);
 });
 
 // creates and stores restuarant info in db
