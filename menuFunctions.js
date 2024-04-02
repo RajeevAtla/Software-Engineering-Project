@@ -7,7 +7,7 @@ const url = require('url');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: 'i<3rutgers',
+    password: 'sweteam',
     database: 'PickupPlus',
     waitForConnections: true,
     connectionLimit: 10,
@@ -36,7 +36,7 @@ async function addItem(itemID) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'INSERT INTO MenuItem (id) VALUES (?)';
+        const query = 'INSERT INTO MenuItem (itemid) VALUES (?)';
         const [results] = await connection.query(query, [itemID]);
         return results;
     } catch (err) {
@@ -51,7 +51,7 @@ async function deleteItem(itemID) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'DELETE FROM MenuItem WHERE id = ?';
+        const query = 'DELETE FROM MenuItem WHERE itemid = ?';
         const [results] = await connection.query(query, [itemID]);
         return results;
     } catch (err) {
@@ -66,7 +66,7 @@ async function searchItems(itemID) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'SELECT * FROM MenuItem WHERE id = ?';
+        const query = 'SELECT * FROM MenuItem WHERE Itemid = ?';
         const [results] = await connection.query(query, [itemID]);
         return results;
     } catch (err) {
@@ -81,7 +81,7 @@ async function listItemCategories(restaurantID) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'SELECT category FROM categories WHERE restaurant_id = ?';
+        const query = 'SELECT category FROM Restaurant WHERE restaurantid = ?';
         const [results] = await connection.query(query, [restaurantID]);
         return results;
     } catch (err) {
@@ -92,12 +92,13 @@ async function listItemCategories(restaurantID) {
     }
 }
 
-async function sortItemsByPrice() {
+
+async function sortItemsByPrice(restaurantID) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'SELECT * FROM MenuItem ORDER BY price ASC';
-        const [sortedItems] = await connection.query(query);
+        const query = 'SELECT * FROM MenuItem WHERE restaurantid = ? ORDER BY price ASC';
+        const [sortedItems] = await connection.query(query, [restaurantID]);
         return sortedItems;
     } catch (err) {
         console.error("Error in sortItemsByPrice: ", err);
@@ -107,12 +108,12 @@ async function sortItemsByPrice() {
     }
 }
 
-async function getItemsBelowPrice(priceLimit) {
+async function getItemsBelowPrice(restaurantID, priceLimit) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'SELECT * FROM items WHERE price <= ?';
-        const [items] = await connection.query(query, [priceLimit]);
+        const query = 'SELECT * FROM MenuItem WHERE restaurantid = ? AND price <= ?';
+        const [items] = await connection.query(query, [restaurantID, priceLimit]);
         return items;
     } catch (err) {
         console.error("Error in getItemsBelowPrice: ", err);
@@ -122,4 +123,5 @@ async function getItemsBelowPrice(priceLimit) {
     }
 }
 
-module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice };
+
+module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, getItemsBelowPrice };

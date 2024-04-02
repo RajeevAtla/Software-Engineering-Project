@@ -6,7 +6,7 @@ const url = require('url');
 const dbConfig = {
   host: 'localhost',
   user: 'root',
-  password: 'i<3rutgers',
+  password: 'sweteam',
   database: 'PickupPlus'
 };
 
