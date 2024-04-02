@@ -1,21 +1,5 @@
-const http = require('http');
-const mysql = require('mysql2/promise');
-const url = require('url');
-
-//connect to mySQL
-// Connection pool configuration
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'sweteam',
-    database: 'PickupPlus',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
-
 //openMenu function. Function should open menu based on the restaurantID. 
-async function openMenu(restaurantID) {
+async function openMenu(pool, restaurantID) {
     let connection;
     try {
         connection = await pool.getConnection(); // Get a connection from the pool
@@ -32,22 +16,14 @@ async function openMenu(restaurantID) {
     }
 }
 
-async function addItem(restaurantID, name, description, price) {
+async function addItem(pool, restaurantId, name, description, price) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'INSERT INTO MenuItem (restaurantid, name, description, price) VALUES (?, ?, ?, ?)';
-        const [results] = await connection.query(query, [restaurantID, name, description, price]);
-        
-        if (results.affectedRows === 1) {
-            return { 
-                message: "Item added successfully",
-                itemID: results.insertId, // Get the auto-generated ID
-                itemName: name
-            };
-        } else {
-            return { message: "Item not added" };
-        }
+        const query = `INSERT INTO MenuItem (restaurantid, name, description, price)
+                       VALUES (?, ?, ?, ?)`;
+        const [results] = await connection.query(query, [restaurantId, name, description, price]);
+        return results;
     } catch (err) {
         console.error("Error in addItem: ", err);
         throw err;  
@@ -57,37 +33,51 @@ async function addItem(restaurantID, name, description, price) {
 }
 
 
-async function deleteItem(itemID) {
+async function deleteItem(pool, itemID) {
     let connection;
     try {
+        // Attempt to get a connection from the pool
         connection = await pool.getConnection();
+        // Corrected the column name to 'itemid' as per your table schema
         const query = 'DELETE FROM MenuItem WHERE itemid = ?';
+        // Execute the delete query with the provided itemID
         const [results] = await connection.query(query, [itemID]);
+        // Return the results of the delete operation
         return results;
     } catch (err) {
+        // Log the error to the console
         console.error("Error in deleteItem: ", err);
-        throw err;
+        throw err; // Rethrow the error to handle it in the calling function
     } finally {
+        // Ensure the database connection is always released back to the pool
         if (connection) connection.release();
     }
 }
 
-async function searchItems(itemID) {
+
+async function searchItems(pool, itemID) {
     let connection;
     try {
+        // Attempt to get a connection from the pool
         connection = await pool.getConnection();
-        const query = 'SELECT * FROM MenuItem WHERE Itemid = ?';
+        // Updated query to use the correct column name 'itemid'
+        const query = 'SELECT * FROM MenuItem WHERE itemid = ?';
+        // Execute the query with the provided itemID
         const [results] = await connection.query(query, [itemID]);
+        // Return the results of the query, which could be an empty array if no items are found
         return results;
     } catch (err) {
+        // Log the error for debugging purposes
         console.error("Error in searchItems: ", err);
-        throw err;
+        throw err; // Rethrow the error for further handling, such as sending an HTTP response code
     } finally {
+        // Ensure the database connection is always released back to the pool, preventing connection leaks
         if (connection) connection.release();
     }
 }
 
-async function listItemCategories(restaurantID) {
+//We dont have catagories right now, ignore this function
+async function listItemCategories(pool, restaurantID) {
     let connection;
     try {
         connection = await pool.getConnection();
@@ -102,8 +92,7 @@ async function listItemCategories(restaurantID) {
     }
 }
 
-
-async function sortItemsByPrice(restaurantID) {
+async function sortItemsByPrice(pool) {
     let connection;
     try {
         connection = await pool.getConnection();
@@ -118,12 +107,13 @@ async function sortItemsByPrice(restaurantID) {
     }
 }
 
-async function getItemsBelowPrice(restaurantID, priceLimit) {
+async function getItemsBelowPrice(pool, priceLimit) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'SELECT * FROM MenuItem WHERE restaurantid = ? AND price <= ?';
-        const [items] = await connection.query(query, [restaurantID, priceLimit]);
+        // Ensure you're using the correct table name and column names as per your schema
+        const query = 'SELECT * FROM MenuItem WHERE price <= ?';
+        const [items] = await connection.query(query, [priceLimit]);
         return items;
     } catch (err) {
         console.error("Error in getItemsBelowPrice: ", err);
@@ -134,4 +124,5 @@ async function getItemsBelowPrice(restaurantID, priceLimit) {
 }
 
 
-module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, getItemsBelowPrice };
+
+module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice,getItemsBelowPrice, addItemToCart };

@@ -4,7 +4,7 @@ change info in getDbConnection() to apply to your mySQL database (host, password
 
 Assuming you have node.js installed, run server by typing the following command line argument:
 
-$ node restaurantManagement.js
+$ node server.js
 
 Server should now be running, port number will be outputted to console. Use postman to send http requests with
 appropriate body content for the desired function (detailed demonstration in video). As a general guide:

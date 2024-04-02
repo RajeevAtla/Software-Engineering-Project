@@ -21,3 +21,6 @@ jasmine test cases can be run via the following command
 npx jasmine
 
 ensure you have the correct connection information for both the mysql database and the server
+
+
+npm install jsonwebtoken
