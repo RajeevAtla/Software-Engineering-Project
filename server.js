@@ -155,28 +155,35 @@ const server = http.createServer(async (req, res) => {
         }
     }
     else if (pathname === '/addItem' && method === 'POST') {
-        // Extract itemID from request body
+        // Extract item details from request body
         let body = '';
         req.on('data', chunk => {
             body += chunk.toString(); // convert Buffer to string
         });
         req.on('end', async () => {
             try {
-                const { itemID } = JSON.parse(body);
-                if (itemID) {
-                    const result = await addItem(itemID);
+                const { restaurantid, name, description, price } = JSON.parse(body);
+                // Ensure all required fields are provided
+                if (restaurantid && name && description && price) {
+                    const result = await addItem(restaurantid, name, description, price);
                     res.statusCode = 201; // Status code for created resource
+                    res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify(result));
                 } else {
-                    res.statusCode = 400; // Bad Request for missing itemID
-                    res.end(JSON.stringify({ error: "Missing itemID in request body" }));
+                    res.statusCode = 400; // Bad Request for missing data
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({ error: "Missing data in request body" }));
                 }
             } catch (error) {
                 res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify({ error: error.message }));
             }
         });
     }
+    
+
+
     else if (pathname === '/deleteItem' && method === 'DELETE') {
         // Extract itemID from query parameters
         const itemID = query.itemID;
