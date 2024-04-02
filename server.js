@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 
 // Assuming orderFunctions.js and a hypothetical menuFunctions.js are in the same directory
 const {placeNewOrder, checkStatus, updateStatus, cancelOrder} = require('./orderFunctions');
-const {openMenu} = require('./menuFunctions')
+const {openMenu,addItem} = require('./menuFunctions')
 const {registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant} = require('./restaurantManagement');
 const {registerUser, userLogin, editUser, deleteUser} = require('./userManagement');
 
@@ -155,25 +155,29 @@ const server = http.createServer(async (req, res) => {
         }
     }
     else if (pathname === '/addItem' && method === 'POST') {
-        // Extract itemID from request body
         let body = '';
         req.on('data', chunk => {
-            body += chunk.toString(); // convert Buffer to string
+            body += chunk.toString(); // Convert Buffer to string
         });
         req.on('end', async () => {
             try {
-                const { itemID } = JSON.parse(body);
-                if (itemID) {
-                    const result = await addItem(itemID);
+                // Extract necessary data from the request body
+                const { restaurantId, name, description, price } = JSON.parse(body);
+                
+                // Ensure all required fields are provided
+                if (restaurantId && name && description && price) {
+                    const result = await addItem(restaurantId, name, description, price);
                     res.statusCode = 201; // Status code for created resource
-                    res.end(JSON.stringify(result));
+                    res.end(JSON.stringify({ message: "Item added successfully", itemId: result.insertId }));
                 } else {
-                    res.statusCode = 400; // Bad Request for missing itemID
-                    res.end(JSON.stringify({ error: "Missing itemID in request body" }));
+                    // If any field is missing, return a Bad Request error
+                    res.statusCode = 400; // Bad Request for missing fields
+                    res.end(JSON.stringify({ error: "Missing one or more fields in request body" }));
                 }
             } catch (error) {
+                console.error(error);
                 res.statusCode = 500;
-                res.end(JSON.stringify({ error: error.message }));
+                res.end(JSON.stringify({ error: "Error adding item" }));
             }
         });
     }
