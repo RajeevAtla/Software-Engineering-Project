@@ -10,8 +10,9 @@ async function registerRestaurant(pool, req, res) {
     const { name, address, email, phonenumber, category, password } = JSON.parse(body);
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    let db;
     try {
-      const db = await pool.getConnection(); // Get a connection from the pool
+      db = await pool.getConnection(); // Get a connection from the pool
       const [result] = await db.execute(
         'INSERT INTO Restaurant (name, address, email, phonenumber, category, password) VALUES (?, ?, ?, ?, ?, ?)',
         [name, address, email, phonenumber, category, hashedPassword]
@@ -29,8 +30,9 @@ async function registerRestaurant(pool, req, res) {
 }
 
 async function restaurantLogin(pool, req, res, restaurantId) {
+  let db;
   try {
-    const db = await pool.getConnection(); // Get a connection from the pool
+    db = await pool.getConnection(); // Get a connection from the pool
     const [results] = await db.execute(
       'SELECT * FROM Restaurant WHERE restaurantId = ?',
       [restaurantId]
@@ -65,6 +67,7 @@ async function restaurantLogin(pool, req, res, restaurantId) {
 }
 
 async function editRestaurant(pool, req, res, restaurantId) {
+  let db;
   let body = '';
   req.on('data', chunk => {
     body += chunk.toString();
@@ -72,7 +75,7 @@ async function editRestaurant(pool, req, res, restaurantId) {
 
   req.on('end', async () => {
     const updateFields = JSON.parse(body);
-    const db = await pool.getConnection(); // Get a connection from the pool
+    db = await pool.getConnection(); // Get a connection from the pool
 
     const setClause = Object.keys(updateFields).map(key => `${key} = ?`).join(', ');
     const values = Object.values(updateFields);
@@ -99,9 +102,9 @@ async function editRestaurant(pool, req, res, restaurantId) {
 }
 
 async function deleteRestaurant(pool, req, res, restaurantId) {
-
+  let db;
   try {
-    const db = await pool.getConnection(); // Get a connection from the pool
+    db = await pool.getConnection(); // Get a connection from the pool
 
     const [results] = await db.execute(
       'DELETE FROM Restaurant WHERE restaurantId = ?',
