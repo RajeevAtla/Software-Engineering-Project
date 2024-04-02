@@ -40,7 +40,7 @@ const server = http.createServer(async (req, res) => {
         req.on('end', async () => {
             try {
                 const { cartId, userId } = JSON.parse(body);
-                const result = await placeNewOrder(cartId, userId);
+                const result = await placeNewOrder(pool, cartId, userId);
 
                 if (result == 'no cart')
                 {
@@ -65,7 +65,7 @@ const server = http.createServer(async (req, res) => {
       const orderNumber = pathname.split('/')[3];
       if (orderNumber) {
           try {
-              const status = await checkStatus(orderNumber); // Await the status from checkStatus function
+              const status = await checkStatus(pool, orderNumber); // Await the status from checkStatus function
               if (status === "Order not found" || status === "Error fetching order details") {
                   res.writeHead(404, { 'Content-Type': 'application/json' });
                   res.end(JSON.stringify({ error: status }));
@@ -83,7 +83,7 @@ const server = http.createServer(async (req, res) => {
         const orderNumber = pathname.split('/')[4];
         if (orderNumber) {
             try {
-                let result = await updateStatus(orderNumber);
+                let result = await updateStatus(pool, orderNumber);
                 if (result == null) {
                   // Order not found
                   res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -109,7 +109,7 @@ const server = http.createServer(async (req, res) => {
         const orderNumber = pathname.split('/')[3];
         if (orderNumber) {
             try {
-                result = await cancelOrder(orderNumber);
+                result = await cancelOrder(pool, orderNumber);
                 if (result == null){
                   res.writeHead(404, { 'Content-Type': 'application/json' });
                   res.end(JSON.stringify({ error: 'Order not found' }));
