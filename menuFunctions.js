@@ -32,12 +32,13 @@ async function openMenu(restaurantID) {
     }
 }
 
-async function addItem(itemID) {
+async function addItem(restaurantId, name, description, price) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'INSERT INTO MenuItem (id) VALUES (?)';
-        const [results] = await connection.query(query, [itemID]);
+        const query = `INSERT INTO MenuItem (restaurantid, name, description, price)
+                       VALUES (?, ?, ?, ?)`;
+        const [results] = await connection.query(query, [restaurantId, name, description, price]);
         return results;
     } catch (err) {
         console.error("Error in addItem: ", err);
@@ -46,6 +47,7 @@ async function addItem(itemID) {
         if (connection) connection.release();
     }
 }
+
 
 async function deleteItem(itemID) {
     let connection;
