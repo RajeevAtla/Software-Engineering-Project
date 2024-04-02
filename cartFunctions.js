@@ -32,14 +32,18 @@ async function addItemToCart(pool, cartId, itemId, quantity) {
 
         let results;
         if (existingItems.length > 0) {
+            // Convert quantities to numbers to ensure proper addition
+            const currentQuantity = Number(existingItems[0].quantity);
+            const additionalQuantity = Number(quantity);
+
             // If the item exists, update the quantity
-            const newQuantity = existingItems[0].quantity + quantity;
+            const newQuantity = currentQuantity + additionalQuantity;
             const updateQuery = `UPDATE CartItems SET quantity = ? WHERE cartid = ? AND itemid = ?`;
             [results] = await connection.query(updateQuery, [newQuantity, cartId, itemId]);
         } else {
             // If the item does not exist, insert it
             const insertQuery = `INSERT INTO CartItems (cartid, itemid, quantity) VALUES (?, ?, ?)`;
-            [results] = await connection.query(insertQuery, [cartId, itemId, quantity]);
+            [results] = await connection.query(insertQuery, [cartId, itemId, Number(quantity)]);
         }
 
         return results;

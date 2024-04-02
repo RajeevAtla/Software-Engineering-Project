@@ -16,13 +16,13 @@ async function openMenu(pool, restaurantID) {
     }
 }
 
-async function addItem(pool, restaurantId, name, description, price) {
+async function addItem(pool, restaurantID, name, description, price) {
     let connection;
     try {
         connection = await pool.getConnection();
         const query = `INSERT INTO MenuItem (restaurantid, name, description, price)
                        VALUES (?, ?, ?, ?)`;
-        const [results] = await connection.query(query, [restaurantId, name, description, price]);
+        const [results] = await connection.query(query, [restaurantID, name, description, price]);
         return results;
     } catch (err) {
         console.error("Error in addItem: ", err);
@@ -76,7 +76,7 @@ async function searchItems(pool, itemID) {
     }
 }
 
-//We dont have catagories right now, ignore this function
+//We dont have catagories right now, ignore this function - ok
 async function listItemCategories(pool, restaurantID) {
     let connection;
     try {
@@ -92,12 +92,15 @@ async function listItemCategories(pool, restaurantID) {
     }
 }
 
-async function sortItemsByPrice(pool) {
+async function sortItemsByPrice(pool, restaurantID) {
     let connection;
     try {
         connection = await pool.getConnection();
         const query = 'SELECT * FROM MenuItem WHERE restaurantid = ? ORDER BY price ASC';
         const [sortedItems] = await connection.query(query, [restaurantID]);
+        if (sortedItems.length === 0) {
+            return { message: "No items found for the given restaurantID" };
+        }
         return sortedItems;
     } catch (err) {
         console.error("Error in sortItemsByPrice: ", err);
@@ -106,6 +109,7 @@ async function sortItemsByPrice(pool) {
         if (connection) connection.release();
     }
 }
+
 
 async function getItemsBelowPrice(pool, priceLimit) {
     let connection;
@@ -125,4 +129,4 @@ async function getItemsBelowPrice(pool, priceLimit) {
 
 
 
-module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice,getItemsBelowPrice, addItemToCart };
+module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice,getItemsBelowPrice };
