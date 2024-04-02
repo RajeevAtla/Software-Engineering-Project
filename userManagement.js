@@ -6,6 +6,7 @@ const http = require('http');
 const url = require('url');
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // MySQL connection
 const db = mysql.createConnection({
