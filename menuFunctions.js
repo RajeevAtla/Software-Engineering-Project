@@ -91,4 +91,35 @@ async function listItemCategories(restaurantID) {
         if (connection) connection.release();
     }
 }
-module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories };
+
+async function sortItemsByPrice() {
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const query = 'SELECT * FROM MenuItem ORDER BY price ASC';
+        const [sortedItems] = await connection.query(query);
+        return sortedItems;
+    } catch (err) {
+        console.error("Error in sortItemsByPrice: ", err);
+        throw err;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function getItemsBelowPrice(priceLimit) {
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const query = 'SELECT * FROM items WHERE price <= ?';
+        const [items] = await connection.query(query, [priceLimit]);
+        return items;
+    } catch (err) {
+        console.error("Error in getItemsBelowPrice: ", err);
+        throw err;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice };

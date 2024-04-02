@@ -154,6 +154,110 @@ const server = http.createServer(async (req, res) => {
             res.end(JSON.stringify({ error: "Missing restaurantID parameter" }));
         }
     }
+    else if (pathname === '/addItem' && method === 'POST') {
+        // Extract itemID from request body
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString(); // convert Buffer to string
+        });
+        req.on('end', async () => {
+            try {
+                const { itemID } = JSON.parse(body);
+                if (itemID) {
+                    const result = await addItem(itemID);
+                    res.statusCode = 201; // Status code for created resource
+                    res.end(JSON.stringify(result));
+                } else {
+                    res.statusCode = 400; // Bad Request for missing itemID
+                    res.end(JSON.stringify({ error: "Missing itemID in request body" }));
+                }
+            } catch (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        });
+    }
+    else if (pathname === '/deleteItem' && method === 'DELETE') {
+        // Extract itemID from query parameters
+        const itemID = query.itemID;
+        if (itemID) {
+            try {
+                const result = await deleteItem(itemID);
+                if (result.affectedRows === 0) {
+                    res.statusCode = 404; // Not Found if no item was deleted
+                    res.end(JSON.stringify({ error: "Item not found" }));
+                } else {
+                    res.statusCode = 200; // OK, item successfully deleted
+                    res.end(JSON.stringify({ message: "Item successfully deleted" }));
+                }
+            } catch (error) {
+                res.statusCode = 500; // Internal Server Error
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400; // Bad Request for missing itemID
+            res.end(JSON.stringify({ error: "Missing itemID parameter" }));
+        }
+    }
+    else if (pathname === '/searchItems' && method === 'GET') {
+        // Extract itemID from query parameters
+        const itemID = query.itemID;
+        if (itemID) {
+            try {
+                const results = await searchItems(itemID);
+                if (results.length === 0) {
+                    res.statusCode = 404; // Not Found if no items were found
+                    res.end(JSON.stringify({ error: "Item not found" }));
+                } else {
+                    res.statusCode = 200; // OK, items found
+                    res.end(JSON.stringify(results));
+                }
+            } catch (error) {
+                res.statusCode = 500; // Internal Server Error
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400; // Bad Request for missing itemID
+            res.end(JSON.stringify({ error: "Missing itemID parameter" }));
+        }
+    }
+    else if (pathname === '/sortItemsByPrice' && method === 'GET') {
+        try {
+            const sortedItems = await sortItemsByPrice();
+            if (sortedItems.length === 0) {
+                res.statusCode = 404;
+                res.end(JSON.stringify({ error: "No items found" }));
+            } else {
+                res.statusCode = 200;
+                res.end(JSON.stringify(sortedItems));
+            }
+        } catch (error) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: error.message }));
+        }
+    }
+    else if (pathname === '/getItemsBelowPrice' && method === 'GET') {
+        const priceLimit = query.priceLimit;
+        if (priceLimit) {
+            try {
+                const items = await getItemsBelowPrice(priceLimit);
+                if (items.length === 0) {
+                    res.statusCode = 404; // Not Found if no items were found
+                    res.end(JSON.stringify({ error: "No items found below the specified price" }));
+                } else {
+                    res.statusCode = 200; // OK, items found
+                    res.end(JSON.stringify(items));
+                }
+            } catch (error) {
+                res.statusCode = 500; // Internal Server Error
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400; // Bad Request for missing or invalid priceLimit
+            res.end(JSON.stringify({ error: "Missing or invalid priceLimit parameter" }));
+        }
+    }
+
     // User registration
     else if (pathname === '/api/users/register' && method === 'POST') {
         registerUser(req, res);
