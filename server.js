@@ -1,16 +1,28 @@
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2/promise');
-const bcrypt = require('bcrypt');
 
 // Assuming orderFunctions.js and a hypothetical menuFunctions.js are in the same directory
 const {placeNewOrder, checkStatus, updateStatus, cancelOrder} = require('./orderFunctions');
-const {openMenu, addItem, deleteItem, searchItems, listItemCategories, getItemsBelowPrice, sortItemsByPrice} = require('./menuFunctions')
+const {openMenu,addItem,deleteItem,searchItems,sortItemsByPrice,getItemsBelowPrice} = require('./menuFunctions')
 const {registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant} = require('./restaurantManagement');
 const {registerUser, userLogin, editUser, deleteUser} = require('./userManagement');
+const {addItemToCart, deleteItemFromCart, getCartItems, clearCart} = require('./cartFunctions');
 
 const hostname = '127.0.0.1';
 const port = 4002; // Unified server port
+
+//connect to mySQL
+// Connection pool configuration
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'i<3rutgers',
+    database: 'PickupPlus',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
 
 const server = http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true); // Parse the URL of the request
@@ -29,7 +41,7 @@ const server = http.createServer(async (req, res) => {
         req.on('end', async () => {
             try {
                 const { cartId, userId } = JSON.parse(body);
-                const result = await placeNewOrder(cartId, userId);
+                const result = await placeNewOrder(pool, cartId, userId);
 
                 if (result == 'no cart')
                 {
@@ -54,7 +66,7 @@ const server = http.createServer(async (req, res) => {
       const orderNumber = pathname.split('/')[3];
       if (orderNumber) {
           try {
-              const status = await checkStatus(orderNumber); // Await the status from checkStatus function
+              const status = await checkStatus(pool, orderNumber); // Await the status from checkStatus function
               if (status === "Order not found" || status === "Error fetching order details") {
                   res.writeHead(404, { 'Content-Type': 'application/json' });
                   res.end(JSON.stringify({ error: status }));
@@ -72,7 +84,7 @@ const server = http.createServer(async (req, res) => {
         const orderNumber = pathname.split('/')[4];
         if (orderNumber) {
             try {
-                let result = await updateStatus(orderNumber);
+                let result = await updateStatus(pool, orderNumber);
                 if (result == null) {
                   // Order not found
                   res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -98,7 +110,7 @@ const server = http.createServer(async (req, res) => {
         const orderNumber = pathname.split('/')[3];
         if (orderNumber) {
             try {
-                result = await cancelOrder(orderNumber);
+                result = await cancelOrder(pool, orderNumber);
                 if (result == null){
                   res.writeHead(404, { 'Content-Type': 'application/json' });
                   res.end(JSON.stringify({ error: 'Order not found' }));
@@ -119,22 +131,22 @@ const server = http.createServer(async (req, res) => {
     }
     else if (pathname === '/api/restaurants' && method === 'POST') {
         // Register a new restaurant
-        await registerRestaurant(req, res);
+        await registerRestaurant(pool, req, res);
     } 
     else if (pathname.match(/\/api\/restaurants\/\d+$/) && method === 'GET') {
         // Login a restaurant (though typically, GET isn't used for login due to security concerns)
         const restaurantId = pathname.split('/')[3];
-        await restaurantLogin(req, res, restaurantId);
+        await restaurantLogin(pool, req, res, restaurantId);
     } 
     else if (pathname.match(/\/api\/restaurants\/\d+$/) && method === 'PUT') {
         // Edit restaurant details
         const restaurantId = pathname.split('/')[3];
-        await editRestaurant(req, res, restaurantId);
+        await editRestaurant(pool, req, res, restaurantId);
     } 
     else if (pathname.match(/\/api\/restaurants\/\d+$/) && method === 'DELETE') {
         // Delete a restaurant
         const restaurantId = pathname.split('/')[3];
-        await deleteRestaurant(req, res, restaurantId);
+        await deleteRestaurant(pool, req, res, restaurantId);
     }
     // Handling for /menu route from the second server
     else if (pathname === '/menu' && method === 'GET') {
@@ -142,7 +154,7 @@ const server = http.createServer(async (req, res) => {
         const restaurantID = query.restaurantID;
         if (restaurantID) {
             try {
-                const menu = await openMenu(restaurantID);
+                const menu = await openMenu(pool, restaurantID);
                 res.statusCode = 200;
                 res.end(JSON.stringify(menu));
             } catch (error) {
@@ -155,29 +167,29 @@ const server = http.createServer(async (req, res) => {
         }
     }
     else if (pathname === '/addItem' && method === 'POST') {
-        // Extract item details from request body
         let body = '';
         req.on('data', chunk => {
-            body += chunk.toString(); // convert Buffer to string
+            body += chunk.toString(); // Convert Buffer to string
         });
         req.on('end', async () => {
             try {
-                const { restaurantid, name, description, price } = JSON.parse(body);
+                // Extract necessary data from the request body
+                const { restaurantId, name, description, price } = JSON.parse(body);
+                
                 // Ensure all required fields are provided
-                if (restaurantid && name && description && price) {
-                    const result = await addItem(restaurantid, name, description, price);
+                if (restaurantId && name && description && price) {
+                    const result = await addItem(pool, restaurantId, name, description, price);
                     res.statusCode = 201; // Status code for created resource
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify(result));
+                    res.end(JSON.stringify({ message: "Item added successfully", itemId: result.insertId }));
                 } else {
-                    res.statusCode = 400; // Bad Request for missing data
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify({ error: "Missing data in request body" }));
+                    // If any field is missing, return a Bad Request error
+                    res.statusCode = 400; // Bad Request for missing fields
+                    res.end(JSON.stringify({ error: "Missing one or more fields in request body" }));
                 }
             } catch (error) {
+                console.error(error);
                 res.statusCode = 500;
-                res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify({ error: error.message }));
+                res.end(JSON.stringify({ error: "Error adding item" }));
             }
         });
     }
@@ -189,7 +201,7 @@ const server = http.createServer(async (req, res) => {
         const itemID = query.itemID;
         if (itemID) {
             try {
-                const result = await deleteItem(itemID);
+                const result = await deleteItem(pool, itemID);
                 if (result.affectedRows === 0) {
                     res.statusCode = 404; // Not Found if no item was deleted
                     res.end(JSON.stringify({ error: "Item not found" }));
@@ -211,7 +223,7 @@ const server = http.createServer(async (req, res) => {
         const itemID = query.itemID;
         if (itemID) {
             try {
-                const results = await searchItems(itemID);
+                const results = await searchItems(pool, itemID);
                 if (results.length === 0) {
                     res.statusCode = 404; // Not Found if no items were found
                     res.end(JSON.stringify({ error: "Item not found" }));
@@ -232,7 +244,7 @@ const server = http.createServer(async (req, res) => {
         const restaurantID= query.restaurantID;
 
         try {
-            const sortedItems = await sortItemsByPrice(restaurantID);
+            const sortedItems = await sortItemsByPrice(pool);
             if (sortedItems.length === 0) {
                 res.statusCode = 404;
                 res.end(JSON.stringify({ error: "No items found" }));
@@ -250,7 +262,7 @@ const server = http.createServer(async (req, res) => {
         const restaurantID = query.restaurantID;
         if (priceLimit) {
             try {
-                const items = await getItemsBelowPrice(restaurantID, priceLimit);
+                const items = await getItemsBelowPrice(pool, priceLimit);
                 if (items.length === 0) {
                     res.statusCode = 404; // Not Found if no items were found
                     res.end(JSON.stringify({ error: "No items found below the specified price" }));
@@ -268,45 +280,88 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
-    else if (pathname === '/listItemCategories' && method === 'GET') {
-        const restaurantID = query.restaurantID;
-        if (restaurantID) {
+    // Cart Functions
+    else if (pathname === '/cart/add' && method === 'POST') {
+        const { cartId, itemId, quantity } = query;
+        if (cartId && itemId && quantity) {
             try {
-                const categories = await listItemCategories(restaurantID);
-                if (categories.length === 0) {
-                    res.statusCode = 404; // Not Found if no categories were found
-                    res.end(JSON.stringify({ error: "No categories found for the given restaurant" }));
-                } else {
-                    res.statusCode = 200; // OK, categories found
-                    res.end(JSON.stringify(categories));
-                }
+                const result = await addItemToCart(pool, cartId, itemId, quantity);
+                res.statusCode = 200;
+                res.end(JSON.stringify({ message: 'Item added to cart', result }));
             } catch (error) {
-                res.statusCode = 500; // Internal Server Error
+                res.statusCode = 500;
                 res.end(JSON.stringify({ error: error.message }));
             }
         } else {
-            res.statusCode = 400; // Bad Request for missing restaurantID
-            res.end(JSON.stringify({ error: "Missing restaurantID parameter" }));
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing required parameters' }));
         }
     }
-
+    else if (pathname === '/cart/delete' && method === 'POST') {
+        const { cartId, itemId, quantity } = query;
+        if (cartId && itemId) {
+            try {
+                const result = await deleteItemFromCart(pool, cartId, itemId, quantity);
+                res.statusCode = 200;
+                res.end(JSON.stringify({ message: 'Item deleted from cart', result }));
+            } catch (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing required parameters' }));
+        }
+    }
+    else if (pathname === '/cart/items' && method === 'GET') {
+        const cartId = query.cartId;
+        if (cartId) {
+            try {
+                const items = await getCartItems(pool, cartId);
+                res.statusCode = items.length > 0 ? 200 : 404;
+                res.end(JSON.stringify(items.length > 0 ? items : { error: "No items found in the cart" }));
+            } catch (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing cartId parameter' }));
+        }
+    }
+    else if (pathname === '/cart/clear' && method === 'POST') {
+        const cartId = query.cartId;
+        if (cartId) {
+            try {
+                const result = await clearCart(pool, cartId);
+                res.statusCode = 200;
+                res.end(JSON.stringify({ message: 'Cart cleared', result }));
+            } catch (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing cartId parameter' }));
+        }
+    }
     // User registration
     else if (pathname === '/api/users/register' && method === 'POST') {
-        registerUser(req, res);
+        await registerUser(pool, req, res);
     } 
     // User login, example route: /api/users/login/1 for user with userid 1
     else if (pathname === '/api/users/login' && method === 'POST') {
-        userLogin(req, res);
+        await userLogin(pool, req, res);
     }
     // Edit user, example route: /api/users/edit/1 for user with userid 1
     else if (pathname.match(/\/api\/users\/edit\/\d+$/) && method === 'PUT') {
         const userid = pathname.split('/')[4]; // Extract userid from URL
-        editUser(req, res, userid);
+        await editUser(pool, req, res, userid);
     } 
     // Delete user, example route: /api/users/delete/1 for user with userid 1
     else if (pathname.match(/\/api\/users\/delete\/\d+$/) && method === 'DELETE') {
         const userid = pathname.split('/')[4]; // Extract userid from URL
-        deleteUser(req, res, userid);
+        await deleteUser(pool, req, res, userid);
     }
     else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
