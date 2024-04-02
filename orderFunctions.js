@@ -1,23 +1,9 @@
-const mysql = require('mysql2/promise');
-const http = require('http');
-const url = require('url');
-
-// Assuming you have established a database connection
-const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: 'i<3rutgers',
-  database: 'PickupPlus'
-};
-
 // Function to place a new order
-async function placeNewOrder(cartId, userId) {
-    let connection;
+async function placeNewOrder(pool, cartId, userId) {
     let orderResult; // Declare orderResult outside the try block to widen its scope
   
     try {
-      connection = await mysql.createConnection(dbConfig);
-      await connection.beginTransaction();
+      const connection = await pool.getConnection();
       
       // checks if the user id inputted exists
       const [user] = await connection.query('SELECT userid FROM User WHERE userid = ?', [userId]);
@@ -55,17 +41,16 @@ async function placeNewOrder(cartId, userId) {
       console.error('Failed to place order:', error);
       throw error; // Rethrow the error to handle it in the calling function
     } finally {
-      if (connection) await connection.end();
+      if (connection) await connection.release();
     }
     
     return orderResult[0].insertId;
 }
   
-async function printOrderDetails(orderNumber) {
-    const connection = await mysql.createConnection(dbConfig);
-  
+async function printOrderDetails(pool, orderNumber) {
     try {
       // Fetch order details
+      const connection = await pool.getConnection();
       const [orderDetails] = await connection.query(
         'SELECT o.orderid, o.ordertime, o.totalprice, o.orderstatus, u.firstname, u.lastname, o.cartid FROM Orders o JOIN User u ON o.userid = u.userid WHERE o.orderid = ?',
         [orderNumber]
@@ -98,13 +83,13 @@ async function printOrderDetails(orderNumber) {
       console.error('Error fetching order details:', error);
     } finally {
       // Always close the connection
-      await connection.end();
+      connection.release();
     }
 }
   
-async function createAndPrintOrder(cartId, userId) {
+async function createAndPrintOrder(pool, cartId, userId) {
   try {
-    const orderId = await placeNewOrder(cartId, userId); // This waits for the order ID
+    const orderId = await placeNewOrder(pool, cartId, userId); // This waits for the order ID
     console.log('Order placement process completed.');
     await printOrderDetails(orderId); // Now prints details for the new order
   } catch (error) {
@@ -115,9 +100,8 @@ async function createAndPrintOrder(cartId, userId) {
 
 
 async function checkStatus(orderNumber) { // fetches the order status of a specific order
-  let connection;
   try {
-      connection = await mysql.createConnection(dbConfig);
+      const connection = await pool.getConnection();
       // Fetches from the database the order status from an order with the order id requested
       const [order] = await connection.query('SELECT orderstatus FROM Orders WHERE orderid = ?', [orderNumber]);
 
@@ -135,16 +119,16 @@ async function checkStatus(orderNumber) { // fetches the order status of a speci
       return "Error fetching order details"; // Return a message indicating an error occurred
   } finally {
       if (connection) {
-          await connection.end(); // Always close the connection
+        connection.release(); // Release the connection back to the pool
       }
   }
 }
 
 
-async function updateStatus(orderNumber) { // updates the order with status 
-    const connection = await mysql.createConnection(dbConfig);
+async function updateStatus(pool, orderNumber) { // updates the order with status 
     try {
         // Fetches the current status of the order from the database
+        const connection = await pool.getConnection();
         const [orders] = await connection.query('SELECT orderstatus FROM Orders WHERE orderid = ?', [orderNumber]);
 
         // Checks if the order with the specified orderid was found
@@ -175,16 +159,16 @@ async function updateStatus(orderNumber) { // updates the order with status
         console.error('Error updating order status:', error);
     } finally {
         // Always close the connection
-        await connection.end();
+        connection.release(); // Release the connection back to the pool
     }
 }
 
 
 
 //cancel order, the status is preparing or completed, throw back and error 
-async function cancelOrder(orderNumber){
-  const connection = await mysql.createConnection(dbConfig);
+async function cancelOrder(pool, orderNumber){
     try{
+        const connection = await pool.getConnection();
         // fetches from the database the order status from an order with the order id request
         const [order] = await connection.query('SELECT orderstatus FROM Orders WHERE orderid = ?', [orderNumber]);
 
@@ -211,7 +195,7 @@ async function cancelOrder(orderNumber){
     } 
     finally {
     // Always close the connection
-    await connection.end();
+    connection.release(); // Release the connection back to the pool
     }
 
 }

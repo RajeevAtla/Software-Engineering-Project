@@ -1,20 +1,6 @@
-const http = require('http');
-const url = require('url');
-const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 
-let db;
-async function getDbConnection() {
-  db = await mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'i<3rutgers',
-    database: 'PickupPlus'
-  });
-  return db;
-}
-
-async function registerRestaurant(req, res) {
+async function registerRestaurant(pool, req, res) {
   let body = '';
   req.on('data', chunk => {
     body += chunk.toString();
@@ -23,9 +9,9 @@ async function registerRestaurant(req, res) {
   req.on('end', async () => {
     const { name, address, email, phonenumber, category, password } = JSON.parse(body);
     const hashedPassword = await bcrypt.hash(password, 10);
-    const db = await getDbConnection();
 
     try {
+      const db = await pool.getConnection(); // Get a connection from the pool
       const [result] = await db.execute(
         'INSERT INTO Restaurant (name, address, email, phonenumber, category, password) VALUES (?, ?, ?, ?, ?, ?)',
         [name, address, email, phonenumber, category, hashedPassword]
@@ -37,14 +23,14 @@ async function registerRestaurant(req, res) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
     } finally {
-      await db.end();
+      db.release(); // Release the connection back to the pool
     }
   });
 }
 
-async function restaurantLogin(req, res, restaurantId) {
-  const db = await getDbConnection();
+async function restaurantLogin(pool, req, res, restaurantId) {
   try {
+    const db = await pool.getConnection(); // Get a connection from the pool
     const [results] = await db.execute(
       'SELECT * FROM Restaurant WHERE restaurantId = ?',
       [restaurantId]
@@ -74,11 +60,11 @@ async function restaurantLogin(req, res, restaurantId) {
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ message: "Internal server error" }));
   } finally {
-    await db.end();
+      db.release(); // Release the connection back to the pool
   }
 }
 
-async function editRestaurant(req, res, restaurantId) {
+async function editRestaurant(pool, req, res, restaurantId) {
   let body = '';
   req.on('data', chunk => {
     body += chunk.toString();
@@ -86,7 +72,7 @@ async function editRestaurant(req, res, restaurantId) {
 
   req.on('end', async () => {
     const updateFields = JSON.parse(body);
-    const db = await getDbConnection();
+    const db = await pool.getConnection(); // Get a connection from the pool
 
     const setClause = Object.keys(updateFields).map(key => `${key} = ?`).join(', ');
     const values = Object.values(updateFields);
@@ -107,15 +93,16 @@ async function editRestaurant(req, res, restaurantId) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
     } finally {
-      await db.end();
+      db.release(); // Release the connection back to the pool
     }
   });
 }
 
-async function deleteRestaurant(req, res, restaurantId) {
-  const db = await getDbConnection();
+async function deleteRestaurant(pool, req, res, restaurantId) {
 
   try {
+    const db = await pool.getConnection(); // Get a connection from the pool
+
     const [results] = await db.execute(
       'DELETE FROM Restaurant WHERE restaurantId = ?',
       [restaurantId]
@@ -133,7 +120,7 @@ async function deleteRestaurant(req, res, restaurantId) {
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
   } finally {
-    await db.end();
+    db.release(); // Release the connection back to the pool
   }
 }
 
