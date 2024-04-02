@@ -54,7 +54,7 @@ async function userLogin(pool, req, res) {
 
     db = await pool.getConnection();
     const [results] = await db.execute('SELECT * FROM user WHERE email = ?', [email]);
-
+    console.log(email)
     if (results.length === 0) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: "User not found" }));
