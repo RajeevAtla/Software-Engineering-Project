@@ -123,4 +123,6 @@ async function getItemsBelowPrice(pool, priceLimit) {
     }
 }
 
-module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice,getItemsBelowPrice };
+
+
+module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice,getItemsBelowPrice, addItemToCart };
