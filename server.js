@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 
 // Assuming orderFunctions.js and a hypothetical menuFunctions.js are in the same directory
 const {placeNewOrder, checkStatus, updateStatus, cancelOrder} = require('./orderFunctions');
-const {openMenu,addItem,deleteItem,searchItems} = require('./menuFunctions')
+const {openMenu,addItem,deleteItem,searchItems,sortItemsByPrice,getItemsBelowPrice} = require('./menuFunctions')
 const {registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant} = require('./restaurantManagement');
 const {registerUser, userLogin, editUser, deleteUser} = require('./userManagement');
 

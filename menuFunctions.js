@@ -92,7 +92,7 @@ async function searchItems(itemID) {
     }
 }
 
-
+//We dont have catagories right now, ignore this function
 async function listItemCategories(restaurantID) {
     let connection;
     try {
@@ -127,7 +127,8 @@ async function getItemsBelowPrice(priceLimit) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const query = 'SELECT * FROM items WHERE price <= ?';
+        // Ensure you're using the correct table name and column names as per your schema
+        const query = 'SELECT * FROM MenuItem WHERE price <= ?';
         const [items] = await connection.query(query, [priceLimit]);
         return items;
     } catch (err) {
@@ -138,4 +139,4 @@ async function getItemsBelowPrice(priceLimit) {
     }
 }
 
-module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice };
+module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice,getItemsBelowPrice };
