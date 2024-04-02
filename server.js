@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 
 // Assuming orderFunctions.js and a hypothetical menuFunctions.js are in the same directory
 const {placeNewOrder, checkStatus, updateStatus, cancelOrder} = require('./orderFunctions');
-const {openMenu} = require('./menuFunctions')
+const {openMenu, addItem, deleteItem, searchItems, listItemCategories, getItemsBelowPrice, sortItemsByPrice} = require('./menuFunctions')
 const {registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant} = require('./restaurantManagement');
 const {registerUser, userLogin, editUser, deleteUser} = require('./userManagement');
 
@@ -222,8 +222,10 @@ const server = http.createServer(async (req, res) => {
         }
     }
     else if (pathname === '/sortItemsByPrice' && method === 'GET') {
+        const restaurantID= query.restaurantID;
+
         try {
-            const sortedItems = await sortItemsByPrice();
+            const sortedItems = await sortItemsByPrice(restaurantID);
             if (sortedItems.length === 0) {
                 res.statusCode = 404;
                 res.end(JSON.stringify({ error: "No items found" }));
@@ -238,9 +240,10 @@ const server = http.createServer(async (req, res) => {
     }
     else if (pathname === '/getItemsBelowPrice' && method === 'GET') {
         const priceLimit = query.priceLimit;
+        const restaurantID = query.restaurantID;
         if (priceLimit) {
             try {
-                const items = await getItemsBelowPrice(priceLimit);
+                const items = await getItemsBelowPrice(restaurantID, priceLimit);
                 if (items.length === 0) {
                     res.statusCode = 404; // Not Found if no items were found
                     res.end(JSON.stringify({ error: "No items found below the specified price" }));
@@ -255,6 +258,28 @@ const server = http.createServer(async (req, res) => {
         } else {
             res.statusCode = 400; // Bad Request for missing or invalid priceLimit
             res.end(JSON.stringify({ error: "Missing or invalid priceLimit parameter" }));
+        }
+    }
+
+    else if (pathname === '/listItemCategories' && method === 'GET') {
+        const restaurantID = query.restaurantID;
+        if (restaurantID) {
+            try {
+                const categories = await listItemCategories(restaurantID);
+                if (categories.length === 0) {
+                    res.statusCode = 404; // Not Found if no categories were found
+                    res.end(JSON.stringify({ error: "No categories found for the given restaurant" }));
+                } else {
+                    res.statusCode = 200; // OK, categories found
+                    res.end(JSON.stringify(categories));
+                }
+            } catch (error) {
+                res.statusCode = 500; // Internal Server Error
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400; // Bad Request for missing restaurantID
+            res.end(JSON.stringify({ error: "Missing restaurantID parameter" }));
         }
     }
 

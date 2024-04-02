@@ -8,7 +8,7 @@ async function getDbConnection() {
   db = await mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'i<3rutgers',
+    password: 'sweteam',
     database: 'PickupPlus'
   });
   return db;
