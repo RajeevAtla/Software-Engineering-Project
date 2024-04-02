@@ -52,32 +52,46 @@ async function addItem(restaurantId, name, description, price) {
 async function deleteItem(itemID) {
     let connection;
     try {
+        // Attempt to get a connection from the pool
         connection = await pool.getConnection();
-        const query = 'DELETE FROM MenuItem WHERE id = ?';
+        // Corrected the column name to 'itemid' as per your table schema
+        const query = 'DELETE FROM MenuItem WHERE itemid = ?';
+        // Execute the delete query with the provided itemID
         const [results] = await connection.query(query, [itemID]);
+        // Return the results of the delete operation
         return results;
     } catch (err) {
+        // Log the error to the console
         console.error("Error in deleteItem: ", err);
-        throw err;
+        throw err; // Rethrow the error to handle it in the calling function
     } finally {
+        // Ensure the database connection is always released back to the pool
         if (connection) connection.release();
     }
 }
 
+
 async function searchItems(itemID) {
     let connection;
     try {
+        // Attempt to get a connection from the pool
         connection = await pool.getConnection();
-        const query = 'SELECT * FROM MenuItem WHERE id = ?';
+        // Updated query to use the correct column name 'itemid'
+        const query = 'SELECT * FROM MenuItem WHERE itemid = ?';
+        // Execute the query with the provided itemID
         const [results] = await connection.query(query, [itemID]);
+        // Return the results of the query, which could be an empty array if no items are found
         return results;
     } catch (err) {
+        // Log the error for debugging purposes
         console.error("Error in searchItems: ", err);
-        throw err;
+        throw err; // Rethrow the error for further handling, such as sending an HTTP response code
     } finally {
+        // Ensure the database connection is always released back to the pool, preventing connection leaks
         if (connection) connection.release();
     }
 }
+
 
 async function listItemCategories(restaurantID) {
     let connection;
