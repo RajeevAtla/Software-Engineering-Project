@@ -7,6 +7,7 @@ const {placeNewOrder, checkStatus, updateStatus, cancelOrder} = require('./order
 const {openMenu,addItem,deleteItem,searchItems,sortItemsByPrice,getItemsBelowPrice} = require('./menuFunctions')
 const {registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant} = require('./restaurantManagement');
 const {registerUser, userLogin, editUser, deleteUser} = require('./userManagement');
+const {addItemToCart, deleteItemFromCart, getCartItems, clearCart} = require('./cartFunctions');
 
 const hostname = '127.0.0.1';
 const port = 4002; // Unified server port
@@ -273,6 +274,71 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
+    // Cart Functions
+    else if (pathname === '/cart/add' && method === 'POST') {
+        const { cartId, itemId, quantity } = query;
+        if (cartId && itemId && quantity) {
+            try {
+                const result = await addItemToCart(pool, cartId, itemId, quantity);
+                res.statusCode = 200;
+                res.end(JSON.stringify({ message: 'Item added to cart', result }));
+            } catch (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing required parameters' }));
+        }
+    }
+    else if (pathname === '/cart/delete' && method === 'POST') {
+        const { cartId, itemId, quantity } = query;
+        if (cartId && itemId) {
+            try {
+                const result = await deleteItemFromCart(pool, cartId, itemId, quantity);
+                res.statusCode = 200;
+                res.end(JSON.stringify({ message: 'Item deleted from cart', result }));
+            } catch (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing required parameters' }));
+        }
+    }
+    else if (pathname === '/cart/items' && method === 'GET') {
+        const cartId = query.cartId;
+        if (cartId) {
+            try {
+                const items = await getCartItems(pool, cartId);
+                res.statusCode = items.length > 0 ? 200 : 404;
+                res.end(JSON.stringify(items.length > 0 ? items : { error: "No items found in the cart" }));
+            } catch (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing cartId parameter' }));
+        }
+    }
+    else if (pathname === '/cart/clear' && method === 'POST') {
+        const cartId = query.cartId;
+        if (cartId) {
+            try {
+                const result = await clearCart(pool, cartId);
+                res.statusCode = 200;
+                res.end(JSON.stringify({ message: 'Cart cleared', result }));
+            } catch (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        } else {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing cartId parameter' }));
+        }
+    }
     // User registration
     else if (pathname === '/api/users/register' && method === 'POST') {
         await registerUser(pool, req, res);
