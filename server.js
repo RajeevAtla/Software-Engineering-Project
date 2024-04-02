@@ -17,7 +17,7 @@ const port = 4002; // Unified server port
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: 'i<3rutgers',
+    password: 'sweteam',
     database: 'PickupPlus',
     waitForConnections: true,
     connectionLimit: 10,
@@ -174,11 +174,11 @@ const server = http.createServer(async (req, res) => {
         req.on('end', async () => {
             try {
                 // Extract necessary data from the request body
-                const { restaurantId, name, description, price } = JSON.parse(body);
+                const { restaurantID, name, description, price } = JSON.parse(body);
                 
                 // Ensure all required fields are provided
-                if (restaurantId && name && description && price) {
-                    const result = await addItem(pool, restaurantId, name, description, price);
+                if (restaurantID && name && description && price) {
+                    const result = await addItem(pool, restaurantID, name, description, price);
                     res.statusCode = 201; // Status code for created resource
                     res.end(JSON.stringify({ message: "Item added successfully", itemId: result.insertId }));
                 } else {
@@ -244,7 +244,7 @@ const server = http.createServer(async (req, res) => {
         const restaurantID= query.restaurantID;
 
         try {
-            const sortedItems = await sortItemsByPrice(pool);
+            const sortedItems = await sortItemsByPrice(pool, restaurantID);
             if (sortedItems.length === 0) {
                 res.statusCode = 404;
                 res.end(JSON.stringify({ error: "No items found" }));
@@ -297,7 +297,7 @@ const server = http.createServer(async (req, res) => {
             res.end(JSON.stringify({ error: 'Missing required parameters' }));
         }
     }
-    else if (pathname === '/cart/delete' && method === 'POST') {
+    else if (pathname === '/cart/delete' && method === 'DELETE') {
         const { cartId, itemId, quantity } = query;
         if (cartId && itemId) {
             try {
@@ -329,7 +329,7 @@ const server = http.createServer(async (req, res) => {
             res.end(JSON.stringify({ error: 'Missing cartId parameter' }));
         }
     }
-    else if (pathname === '/cart/clear' && method === 'POST') {
+    else if (pathname === '/cart/clear' && method === 'DELETE') {
         const cartId = query.cartId;
         if (cartId) {
             try {
