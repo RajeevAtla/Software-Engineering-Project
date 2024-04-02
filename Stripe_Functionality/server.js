@@ -7,26 +7,28 @@ const YOUR_STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_API_PUBLIC;
 
 // Basic server setup
 const server = http.createServer(async (req, res) => {
-  if (req.url === '/payment' && req.method === 'POST') {
-    console.log("MADE IT HERE");
+  if (req.url === '/charge' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk.toString());
+    req.on('end', async () => {
 
-    try {
-      const session = await stripe.checkout.sessions.create({
-        line_items: [{
-          price: 'price_YOUR_STRIPE_PRODUCT_ID', // Replace with your price ID
-          quantity: 1
-        }],
-        mode: 'payment',
-        success_url: `${domain}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${domain}/cancel`,
-      });
+      try {
+        const charge = await stripe.charges.create({
+          amount: 1099,
+          currency: 'usd',
+          source: 'tok_visa',
+          receipt_email: 'willyam.15153@gmail.com'
+        });
 
-      res.json({ url: session.url }); // Return the URL to the frontend
-    } catch (error) {
-      // Handle errors from Stripe
-      console.error(error);
-      res.status(500).send("Error processing payment");
-    }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+
+      } catch (error) {
+        console.error(error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false }));
+      }
+    });
   } else {
     // Serve the frontend content
     res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -46,7 +48,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const port = 3000; // Or any other available port
+const port = 4002; // Or any other available port
 server.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
