@@ -1,7 +1,6 @@
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2/promise');
-const bcrypt = require('bcrypt');
 
 // Assuming orderFunctions.js and a hypothetical menuFunctions.js are in the same directory
 const {placeNewOrder, checkStatus, updateStatus, cancelOrder} = require('./orderFunctions');
@@ -11,6 +10,18 @@ const {registerUser, userLogin, editUser, deleteUser} = require('./userManagemen
 
 const hostname = '127.0.0.1';
 const port = 4002; // Unified server port
+
+//connect to mySQL
+// Connection pool configuration
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'i<3rutgers',
+    database: 'PickupPlus',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
 
 const server = http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true); // Parse the URL of the request
@@ -119,22 +130,22 @@ const server = http.createServer(async (req, res) => {
     }
     else if (pathname === '/api/restaurants' && method === 'POST') {
         // Register a new restaurant
-        await registerRestaurant(req, res);
+        await registerRestaurant(pool, req, res);
     } 
     else if (pathname.match(/\/api\/restaurants\/\d+$/) && method === 'GET') {
         // Login a restaurant (though typically, GET isn't used for login due to security concerns)
         const restaurantId = pathname.split('/')[3];
-        await restaurantLogin(req, res, restaurantId);
+        await restaurantLogin(pool, req, res, restaurantId);
     } 
     else if (pathname.match(/\/api\/restaurants\/\d+$/) && method === 'PUT') {
         // Edit restaurant details
         const restaurantId = pathname.split('/')[3];
-        await editRestaurant(req, res, restaurantId);
+        await editRestaurant(pool, req, res, restaurantId);
     } 
     else if (pathname.match(/\/api\/restaurants\/\d+$/) && method === 'DELETE') {
         // Delete a restaurant
         const restaurantId = pathname.split('/')[3];
-        await deleteRestaurant(req, res, restaurantId);
+        await deleteRestaurant(pool, req, res, restaurantId);
     }
     // Handling for /menu route from the second server
     else if (pathname === '/menu' && method === 'GET') {
@@ -142,7 +153,7 @@ const server = http.createServer(async (req, res) => {
         const restaurantID = query.restaurantID;
         if (restaurantID) {
             try {
-                const menu = await openMenu(restaurantID);
+                const menu = await openMenu(pool, restaurantID);
                 res.statusCode = 200;
                 res.end(JSON.stringify(menu));
             } catch (error) {
@@ -166,7 +177,7 @@ const server = http.createServer(async (req, res) => {
                 
                 // Ensure all required fields are provided
                 if (restaurantId && name && description && price) {
-                    const result = await addItem(restaurantId, name, description, price);
+                    const result = await addItem(pool, restaurantId, name, description, price);
                     res.statusCode = 201; // Status code for created resource
                     res.end(JSON.stringify({ message: "Item added successfully", itemId: result.insertId }));
                 } else {
@@ -186,7 +197,7 @@ const server = http.createServer(async (req, res) => {
         const itemID = query.itemID;
         if (itemID) {
             try {
-                const result = await deleteItem(itemID);
+                const result = await deleteItem(pool, itemID);
                 if (result.affectedRows === 0) {
                     res.statusCode = 404; // Not Found if no item was deleted
                     res.end(JSON.stringify({ error: "Item not found" }));
@@ -208,7 +219,7 @@ const server = http.createServer(async (req, res) => {
         const itemID = query.itemID;
         if (itemID) {
             try {
-                const results = await searchItems(itemID);
+                const results = await searchItems(pool, itemID);
                 if (results.length === 0) {
                     res.statusCode = 404; // Not Found if no items were found
                     res.end(JSON.stringify({ error: "Item not found" }));
@@ -227,7 +238,7 @@ const server = http.createServer(async (req, res) => {
     }
     else if (pathname === '/sortItemsByPrice' && method === 'GET') {
         try {
-            const sortedItems = await sortItemsByPrice();
+            const sortedItems = await sortItemsByPrice(pool);
             if (sortedItems.length === 0) {
                 res.statusCode = 404;
                 res.end(JSON.stringify({ error: "No items found" }));
@@ -244,7 +255,7 @@ const server = http.createServer(async (req, res) => {
         const priceLimit = query.priceLimit;
         if (priceLimit) {
             try {
-                const items = await getItemsBelowPrice(priceLimit);
+                const items = await getItemsBelowPrice(pool, priceLimit);
                 if (items.length === 0) {
                     res.statusCode = 404; // Not Found if no items were found
                     res.end(JSON.stringify({ error: "No items found below the specified price" }));
@@ -264,21 +275,21 @@ const server = http.createServer(async (req, res) => {
 
     // User registration
     else if (pathname === '/api/users/register' && method === 'POST') {
-        registerUser(req, res);
+        await registerUser(pool, req, res);
     } 
     // User login, example route: /api/users/login/1 for user with userid 1
     else if (pathname === '/api/users/login' && method === 'POST') {
-        userLogin(req, res);
+        await userLogin(pool, req, res);
     }
     // Edit user, example route: /api/users/edit/1 for user with userid 1
     else if (pathname.match(/\/api\/users\/edit\/\d+$/) && method === 'PUT') {
         const userid = pathname.split('/')[4]; // Extract userid from URL
-        editUser(req, res, userid);
+        await editUser(pool, req, res, userid);
     } 
     // Delete user, example route: /api/users/delete/1 for user with userid 1
     else if (pathname.match(/\/api\/users\/delete\/\d+$/) && method === 'DELETE') {
         const userid = pathname.split('/')[4]; // Extract userid from URL
-        deleteUser(req, res, userid);
+        await deleteUser(pool, req, res, userid);
     }
     else {
         res.writeHead(404, { 'Content-Type': 'application/json' });

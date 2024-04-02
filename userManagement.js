@@ -1,31 +1,12 @@
 //Dealing with user management part of project
 //Focus on the following operations: registerUser, editUser, deleteUser, and login
 
-
-const http = require('http');
-const url = require('url');
-const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// MySQL connection
-const db = mysql.createConnection({
-  host: 'localhost', 
-  user: 'root',
-  password: 'i<3rutgers',
-  database: 'PickupPlus'
-});
-
-db.connect(err => {
-  if (err) {
-    console.error('Error connecting to database: ' + err.stack);
-    return;
-  }
-  //console.log('Connected with id: ' + db.threadId);
-});
-
 // creates and stores restuarant info in db
-function registerUser(req, res) {
+async function registerUser(pool, req, res) {
+  const db = await pool.getConnection(); // Get a connection from the pool
   let body = '';
   req.on('data', chunk => {
       body += chunk.toString();
@@ -55,9 +36,11 @@ function registerUser(req, res) {
           });
       });
   });
+  db.release(); // Release the connection back to the pool
 }
 // login and retrieve user details using the userId
-function userLogin(req, res) {
+async function userLogin(pool, req, res) {
+  const db = await pool.getConnection(); // Get a connection from the pool
     let body = '';
     req.on('data', chunk => {
         body += chunk.toString();
@@ -91,11 +74,13 @@ function userLogin(req, res) {
             });
         });
     });
+    db.release(); // Release the connection back to the pool
 }
 
 
 // field should contain the name of a row in the db, i.e. 'name' 'address' 'email', etc.
-function editUser(req, res, userid){
+async function editUser(pool, req, res, userid){
+  const db = await pool.getConnection(); // Get a connection from the pool
     let body = '';
 
     req.on('data', chunk => {
@@ -118,9 +103,11 @@ function editUser(req, res, userid){
         res.end(JSON.stringify({ message: "user updated successfully" }));
       });
     });
+    db.release(); // Release the connection back to the pool
 }
 
-function getuserId(req, res) {
+async function getuserId(pool, req, res) {
+  const db = await pool.getConnection(); // Get a connection from the pool
     let body = '';
 
     req.on('data', chunk => {
@@ -146,11 +133,11 @@ function getuserId(req, res) {
             res.end(JSON.stringify({ userId }));
         });
     });
+    db.release(); // Release the connection back to the pool
 }
 
-
-
-function deleteUser(req, res, userid){
+async function deleteUser(pool, req, res, userid){
+  const db = await pool.getConnection(); // Get a connection from the pool
     const sql = 'DELETE FROM user WHERE userid = ?';
 
     db.query(sql, [userid], (error, results) => {
@@ -163,6 +150,7 @@ function deleteUser(req, res, userid){
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: "user removed successfully" }));
     });
+    db.release(); // Release the connection back to the pool
 }
 
 module.exports = { registerUser, userLogin, editUser, deleteUser, getuserId};

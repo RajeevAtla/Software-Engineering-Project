@@ -1,21 +1,5 @@
-const http = require('http');
-const mysql = require('mysql2/promise');
-const url = require('url');
-
-//connect to mySQL
-// Connection pool configuration
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'i<3rutgers',
-    database: 'PickupPlus',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
-
 //openMenu function. Function should open menu based on the restaurantID. 
-async function openMenu(restaurantID) {
+async function openMenu(pool, restaurantID) {
     let connection;
     try {
         connection = await pool.getConnection(); // Get a connection from the pool
@@ -32,7 +16,7 @@ async function openMenu(restaurantID) {
     }
 }
 
-async function addItem(restaurantId, name, description, price) {
+async function addItem(pool, restaurantId, name, description, price) {
     let connection;
     try {
         connection = await pool.getConnection();
@@ -49,7 +33,7 @@ async function addItem(restaurantId, name, description, price) {
 }
 
 
-async function deleteItem(itemID) {
+async function deleteItem(pool, itemID) {
     let connection;
     try {
         // Attempt to get a connection from the pool
@@ -71,7 +55,7 @@ async function deleteItem(itemID) {
 }
 
 
-async function searchItems(itemID) {
+async function searchItems(pool, itemID) {
     let connection;
     try {
         // Attempt to get a connection from the pool
@@ -93,7 +77,7 @@ async function searchItems(itemID) {
 }
 
 //We dont have catagories right now, ignore this function
-async function listItemCategories(restaurantID) {
+async function listItemCategories(pool, restaurantID) {
     let connection;
     try {
         connection = await pool.getConnection();
@@ -108,7 +92,7 @@ async function listItemCategories(restaurantID) {
     }
 }
 
-async function sortItemsByPrice() {
+async function sortItemsByPrice(pool) {
     let connection;
     try {
         connection = await pool.getConnection();
@@ -123,7 +107,7 @@ async function sortItemsByPrice() {
     }
 }
 
-async function getItemsBelowPrice(priceLimit) {
+async function getItemsBelowPrice(pool, priceLimit) {
     let connection;
     try {
         connection = await pool.getConnection();
