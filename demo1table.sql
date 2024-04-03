@@ -4,6 +4,7 @@ USE PickupPlus;
 
 -- Drop existing tables to prevent foreign key constraint errors
 -- Drop tables in reverse order of their dependencie
+DROP TABLE IF EXISTS Transactions;
 DROP TABLE IF EXISTS Orders;
 DROP TABLE IF EXISTS CartItems;
 DROP TABLE IF EXISTS Cart;
@@ -70,6 +71,16 @@ CREATE TABLE Orders (
   FOREIGN KEY (userid) REFERENCES User(userid)
 );
 
+CREATE TABLE Transactions (
+  transactionid INT AUTO_INCREMENT PRIMARY KEY,
+  orderid INT,
+  restaurantid INT,
+  userid INT,
+  totalprice INT,
+  FOREIGN KEY (orderid) REFERENCES Orders(orderid),
+  FOREIGN KEY (restaurantid) Restaurant(restaurantid),
+  FOREIGN KEY (userid) User(userid)
+);
 
 INSERT INTO User (userid, firstname, lastname, address, email, phonenumber, password, salt, role) VALUES
 (1, 'Jane', 'Doe', '123 Elm Street', 'jane.doe@example.com', '555-1234', 'hashed_password_here', 'salt_here', 'customer');
