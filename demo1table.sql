@@ -78,8 +78,8 @@ CREATE TABLE Transactions (
   userid INT,
   totalprice INT,
   FOREIGN KEY (orderid) REFERENCES Orders(orderid),
-  FOREIGN KEY (restaurantid) Restaurant(restaurantid),
-  FOREIGN KEY (userid) User(userid)
+  FOREIGN KEY (restaurantid) REFERENCES Restaurant(restaurantid),
+  FOREIGN KEY (userid) REFERENCES User(userid)
 );
 
 INSERT INTO User (userid, firstname, lastname, address, email, phonenumber, password, salt, role) VALUES
