@@ -46,9 +46,64 @@ const server = http.createServer(async (req, res) => {
     `);
     res.end();
   }
+  // Handling for /api/orders route from the first server
+  if (pathname === '/transactions' && method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString(); // Convert Buffer to string
+    });
+    req.on('end', async () => {
+      try {
+        const { userId } = JSON.parse(body); //logging integration will be done eventually
+        const result = await transaction(pool, res, req userId);
+
+
+        if (result == 'no user') {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ message: 'User id not found' }));
+        }
+        else {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ orderId: result, message: 'Order created successfully' }));
+        }
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to create order' }));
+      }
+    });
+  }
 });
 
 const port = 4002; // Or any other available port
 server.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
+
+
+async function transaction(pool, res, req, userid) {
+  let db;
+  try {
+    db = await pool.getConnection(); // Get a connection from the pool
+    const [results] = await db.execute(
+      'SELECT * FROM Transactions WHERE userid = ?',
+      [userid]
+    );
+
+    if (results.length === 0) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "user not found" }));
+      return;
+    }
+
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(results));
+  } catch (error) {
+    console.error('Error processing request:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: "Internal server error" }));
+  } finally {
+    db.release(); // Release the connection back to the pool
+  }
+}
+
