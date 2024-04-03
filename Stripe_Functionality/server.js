@@ -1,10 +1,20 @@
 const http = require('http');
 require('dotenv').config()
+
+const mysql = require('mysql2/promise');
 const stripe = require('stripe')(process.env.STRIPE_API_SECRET);
 const domain = "localhost"
 // Replace with your actual Stripe publishable key
 const YOUR_STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_API_PUBLIC;
-
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: 'i<3rutgers',
+  database: 'PickupPlus',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 // Basic server setup
 const server = http.createServer(async (req, res) => {
   if (req.url === '/charge' && req.method === 'POST') {
@@ -29,34 +39,19 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ success: false }));
       }
     });
-  } else {
-    // Serve the frontend content
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.write(`
-      <html>
-        <head>
-          <title>Takeout App Payment</title>
-          <script src="https://js.stripe.com/v3/"></script>
-        </head>
-        <body>
-          <button id="checkout-button">Pay Now</button>
-          <script src="checkout.js"></script>
-        </body>
-      </html>
-    `);
-    res.end();
   }
   // Handling for /api/orders route from the first server
-  if (pathname === '/transactions' && method === 'POST') {
+  if (req.url === '/transactions' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => {
       body += chunk.toString(); // Convert Buffer to string
     });
     req.on('end', async () => {
       try {
-        const { userId } = JSON.parse(body); //logging integration will be done eventually
-        const result = await transaction(pool, res, req userId);
-
+        const { userid } = JSON.parse(body); //logging integration will be done eventually
+        console.log("RANDO ", userId)
+        const result = await transaction(pool, res, req, userid);
+        console.log(result);
 
         if (result == 'no user') {
           res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -68,7 +63,7 @@ const server = http.createServer(async (req, res) => {
         }
       } catch (error) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to create order' }));
+        res.end(JSON.stringify({ error: 'Failed somewhere' }));
       }
     });
   }
@@ -96,8 +91,7 @@ async function transaction(pool, res, req, userid) {
     }
 
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(results));
+    return results
   } catch (error) {
     console.error('Error processing request:', error);
     res.writeHead(500, { 'Content-Type': 'application/json' });
