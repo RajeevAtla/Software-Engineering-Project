@@ -49,7 +49,7 @@ const server = http.createServer(async (req, res) => {
     req.on('end', async () => {
       try {
         const { userid } = JSON.parse(body); //logging integration will be done eventually
-        console.log("RANDO ", userId)
+        console.log("RANDO ", userid)
         const result = await transaction(pool, res, req, userid);
         console.log(result);
 
@@ -59,7 +59,7 @@ const server = http.createServer(async (req, res) => {
         }
         else {
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ orderId: result, message: 'Order created successfully' }));
+          res.end(JSON.stringify({ orderinfo: result, message: 'thanks for using our service' }));
         }
       } catch (error) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
