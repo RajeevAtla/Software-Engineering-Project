@@ -111,4 +111,5 @@ INSERT INTO CartItems (cartid, itemid, quantity) VALUES
 INSERT INTO Orders (cartid, userid, ordertime, orderstatus) VALUES
 (1, 1, NOW(), 'Pending');
 
-
+INSERT INTO Transactions (orderid, restaurantid,userid, totalprice ) VALUES
+( 1, 1,1, 20);
