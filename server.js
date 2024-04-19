@@ -1,16 +1,31 @@
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2/promise');
+const multer = require('multer');
+const pdf = require('pdf-parse')
 
 // Assuming orderFunctions.js and a hypothetical menuFunctions.js are in the same directory
 const { placeNewOrder, checkStatus, updateStatus, cancelOrder } = require('./orderFunctions');
-const { openMenu, addItem, deleteItem, searchItems, sortItemsByPrice, getItemsBelowPrice } = require('./menuFunctions')
+const { openMenu, addItem, deleteItem, searchItems, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions')
 const { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant } = require('./restaurantManagement');
 const { registerUser, userLogin, editUser, deleteUser } = require('./userManagement');
 const { addItemToCart, deleteItemFromCart, getCartItems, clearCart } = require('./cartFunctions');
 
 const hostname = '127.0.0.1';
 const port = 4002; // Unified server port
+
+// Setup multer for file handling
+const storage = multer.memoryStorage(); // Use memory storage for incoming files
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed!'), false);
+    }
+  }
+}).single('menuFile');
 
 //connect to mySQL
 // Connection pool configuration
@@ -192,9 +207,6 @@ const server = http.createServer(async (req, res) => {
       }
     });
   }
-
-
-
   else if (pathname === '/deleteItem' && method === 'DELETE') {
     // Extract itemID from query parameters
     const itemID = query.itemID;
@@ -278,7 +290,60 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ error: "Missing or invalid priceLimit parameter" }));
     }
   }
+  else if (pathname.startsWith('/api/menu/upload/') && req.method === 'POST') {
+    const pathParts = pathname.split('/');
+    if (pathParts.length === 5 && pathParts[3] === 'upload') {
+      const restaurantID = pathParts[4]; // Extract restaurant ID from URL
 
+      upload(req, res, async (err) => {
+        if (err) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: 'File upload error: ' + err.message }));
+          return;
+        }
+
+        if (!req.file) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'No file uploaded or wrong file type' }));
+          return;
+        }
+
+        try {
+          // Parse the PDF from the file buffer
+          const data = await pdf(req.file.buffer);
+          // Parse menu items from the extracted text and the restaurant ID
+          const items = parseMenuItemsFromPDF(data.text, restaurantID);
+
+          // Attempt to add each item to the database
+          const results = await Promise.all(
+            items.map(item => addItem(pool, item.restaurantID, item.name, item.description, item.price))
+          );
+
+          // Send back success response with count of items added
+          res.statusCode = 201;
+          res.end(JSON.stringify({ message: 'Menu items added successfully', itemsAdded: results.length }));
+        } catch (error) {
+          console.error('Error processing PDF file:', error);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: 'Failed to process PDF file' }));
+        }
+      });
+    } else {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ error: 'Invalid URL format' }));
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+  
   // Cart Functions
   else if (pathname === '/cart/add' && method === 'POST') {
     const { cartId, itemId, quantity } = query;

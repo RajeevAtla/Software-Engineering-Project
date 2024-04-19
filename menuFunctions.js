@@ -17,18 +17,19 @@ async function openMenu(pool, restaurantID) {
 }
 
 async function addItem(pool, restaurantId, name, description, price) {
+  console.log("Attempting to add item:", { restaurantId, name, description, price });
   let connection;
   try {
-    connection = await pool.getConnection();
-    const query = `INSERT INTO MenuItem (restaurantid, name, description, price)
-                       VALUES (?, ?, ?, ?)`;
-    const [results] = await connection.query(query, [restaurantId, name, description, price]);
-    return results;
+      connection = await pool.getConnection();
+      const query = `INSERT INTO MenuItem (restaurantid, name, description, price) VALUES (?, ?, ?, ?)`;
+      const [results] = await connection.query(query, [restaurantId, name, description, price]);
+      console.log("Add item results:", results);
+      return results;
   } catch (err) {
-    console.error("Error in addItem: ", err);
-    throw err;
+      console.error("Error in addItem:", err);
+      throw err;
   } finally {
-    if (connection) connection.release();
+      if (connection) connection.release();
   }
 }
 
@@ -124,6 +125,31 @@ async function getItemsBelowPrice(pool, priceLimit) {
   }
 }
 
+function parseMenuItemsFromPDF(text, restaurantID) {
+  const lines = text.split('\n');
+  return lines.map(line => {
+      // Split each line into parts by looking for hyphens that are likely delimiters.
+      // This regex assumes that a hyphen used as a delimiter is surrounded by characters but not preceded by a space.
+      const parts = line.split(/(?<! )-(?! )/).map(part => part.trim());
+      if (parts.length === 3) {
+          // Assuming that the first part is the name where we need to add spaces before each capital letter
+          // except the first character.
+          const name = parts[0].replace(/([A-Z])/g, ' $1').trim();
+          const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+          const description = parts[1];
+          const price = parseFloat(parts[2].replace(/[^\d.-]/g, '')); // Clean the price string of any non-numeric characters except decimal point and minus
+          if (!isNaN(price)) {
+              return {
+                  restaurantID: restaurantID,
+                  name: formattedName,
+                  description: description,
+                  price: price
+              };
+          }
+      }
+      return null;
+  }).filter(item => item !== null);
+}
 
 
-module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice, getItemsBelowPrice };
+module.exports = { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF };
