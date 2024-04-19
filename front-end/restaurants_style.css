@@ -1,0 +1,67 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    background-color: #ff4500;
+    padding: 10px 20px;
+}
+
+.top-bar a {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    font-size: 16px;
+}
+
+header {
+    background-color: #ff4500;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.content {
+    width: 80%;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.restaurant-list {
+    list-style-type: none; /* Removes default list bullets */
+    padding: 0;
+    margin: 0;
+}
+
+.restaurant-list li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd; /* Adds a separator line between items */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+}
+
+.restaurant-list li:last-child {
+    border-bottom: none; /* Removes border from the last item */
+}
+
+.restaurant-list li:hover {
+    background-color: #f9f9f9; /* Subtle hover effect */
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+}
