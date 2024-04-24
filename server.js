@@ -1,16 +1,20 @@
+require('dotenv').config();
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
 const pdf = require('pdf-parse');
 
+
+
 const {
   placeNewOrder, checkStatus, updateStatus, cancelOrder,
   openMenu, addItem, deleteItem, searchItems, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF,
-  registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant,
-  registerUser, userLogin, editUser, deleteUser,
+  registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant, editUser, deleteUser,
   addItemToCart, deleteItemFromCart, getCartItems, clearCart
 } = require('./orderFunctions'); // Adjusted imports for brevity
+
+const {userLogin,registerUser,verifyToken} = require('./userManagement'); // Adjusted imports for brevity
 
 const hostname = '127.0.0.1';
 const port = 4002;
@@ -55,24 +59,42 @@ async function startServer() {
       });
       req.on('end', async () => {
         try {
-          const { cartId, userId } = JSON.parse(body);
-          const result = await placeNewOrder(pool, cartId, userId);
-
+          // Extract the token from the Authorization header
+          const authHeader = req.headers['authorization'];
+          const token = authHeader && authHeader.split(' ')[1]; // Expected "Bearer TOKEN_VALUE"
+          if (!token) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Auth token is not supplied' }));
+            return;
+          }
+    
+          let decoded;
+          try {
+            decoded = verifyToken(token);
+          } catch (error) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Token is invalid' }));
+            return;
+          }
+    
+          const { cartId } = JSON.parse(body);
+          const userId = decoded.userId; // Assuming your token stores the userId
+    
+          const result = await placeNewOrder(pool, cartId, userId,token);
+    
           if (result == 'no cart') {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'Cart id not found' }));
-          }
-          else if (result == 'no user') {
+          } else if (result == 'no user') {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'User id not found' }));
-          }
-          else {
+          } else {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ orderId: result, message: 'Order created successfully' }));
           }
         } catch (error) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Failed to create order' }));
+          res.end(JSON.stringify({ error: 'Failed to create order', details: error.message }));
         }
       });
     }
@@ -438,4 +460,5 @@ async function startServer() {
   });
 }
 
+console.log('JWT Secret:', process.env.ACCESS_TOKEN_SECRET);
 startServer();

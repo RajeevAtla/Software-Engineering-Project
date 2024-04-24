@@ -3,6 +3,7 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 // creates and stores restuarant info in db
 async function registerUser(pool, req, res) {
@@ -54,7 +55,7 @@ async function userLogin(pool, req, res) {
 
     db = await pool.getConnection();
     const [results] = await db.execute('SELECT * FROM user WHERE email = ?', [email]);
-    console.log(email)
+
     if (results.length === 0) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: "User not found" }));
@@ -70,16 +71,18 @@ async function userLogin(pool, req, res) {
       return;
     }
 
-    // Exclude password from user details
+    // Exclude password from user details and generate token
     delete user.password;
+    const accessToken = jwt.sign({ userId: user.userid }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(user));
+    res.end(JSON.stringify({ user, accessToken }));
 
   } catch (error) {
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ message: "Internal Server Error", error: error.message }));
   } finally {
-    if (db) db.release(); // Release the connection if it was acquired
+    if (db) db.release();
   }
 }
 
@@ -181,4 +184,20 @@ async function deleteUser(pool, req, res, userid) {
     if (db) db.release(); // Release the connection if it was acquired
   }
 }
-module.exports = { registerUser, userLogin, editUser, deleteUser, getuserId };
+
+function verifyToken(token) {
+  try {
+      if (!token) {
+          throw new Error('No token provided');
+      }
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      return { userId: decoded.userId, error: null };
+  } catch (error) {
+      return { userId: null, error: error.message };
+  }
+}
+
+module.exports = { registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken };
+
+
+//export ACCESS_TOKEN_SECRET='your_secret_key_here'
