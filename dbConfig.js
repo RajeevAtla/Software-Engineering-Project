@@ -1,5 +1,7 @@
+
 const readline = require('readline');
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -8,10 +10,10 @@ const rl = readline.createInterface({
 
 function configureDatabase() {
   return new Promise((resolve, reject) => {
-    rl.question('Enter "1" for development or "2" for production: ', (answer) => {
-      let pool;
+    rl.question('Enter "1" for development or "2" for production: ', async (answer) => {
+      let poolConfig;
       if (answer === '1') {
-        pool = mysql.createPool({
+        poolConfig = {
           host: 'localhost',
           user: 'root',
           password: 'i<3rutgers',
@@ -19,9 +21,9 @@ function configureDatabase() {
           waitForConnections: true,
           connectionLimit: 10,
           queueLimit: 0
-        });
+        };
       } else if (answer === '2') {
-        pool = mysql.createPool({
+        poolConfig = {
           host: process.env.AWS_HOST,
           user: process.env.AWS_USERNAME,
           password: process.env.AWS_PASSWORD,
@@ -29,16 +31,26 @@ function configureDatabase() {
           waitForConnections: true,
           connectionLimit: 10,
           queueLimit: 0
-        });
+        };
       } else {
-        reject(new Error('Invalid selection'));
         rl.close();
+        reject(new Error('Invalid selection'));
         return;
       }
-      resolve(pool);
-      rl.close();
+
+      try {
+        const pool = mysql.createPool(poolConfig);
+        // Perform a test query to check the connection
+        await pool.query('SELECT 1'); // This ensures that the pool is not only created but connected
+        resolve(pool);
+      } catch (error) {
+        reject(error);
+      } finally {
+        rl.close();
+      }
     });
   });
 }
 
 module.exports = configureDatabase;
+
