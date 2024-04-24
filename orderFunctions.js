@@ -1,50 +1,61 @@
+const jwt = require('jsonwebtoken')
 // Function to place a new order
-async function placeNewOrder(pool, cartId, userId) {
-    let orderResult; // Declare orderResult outside the try block to widen its scope
-  
-    try {
-      const connection = await pool.getConnection();
-      
-      // checks if the user id inputted exists
+async function placeNewOrder(pool, cartId, userId, token) {
+  let orderResult; // Declare orderResult outside the try block to widen its scope
+  let connection;
+
+  try {
+      // Verify the token and extract user ID
+      if (!token) {
+          return { error: 'No token provided' };
+      }
+
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      if (decoded.userId !== userId) {
+          return { error: 'Unauthorized' }; // Make sure the userId from the token matches the userId parameter
+      }
+
+      connection = await pool.getConnection();
+    
+      // Checks if the user id inputted exists
       const [user] = await connection.query('SELECT userid FROM User WHERE userid = ?', [userId]);
-        if (user.length === 0) {
-            return 'no user'; 
-        }
+      if (user.length === 0) {
+          return { error: 'No user found' };
+      }
 
-
-      // checks if the cart id inputted exists
+      // Checks if the cart id inputted exists
       const [cart] = await connection.query('SELECT cartid FROM Cart WHERE cartid = ?', [cartId]);
       if (cart.length === 0) {
-          return 'no cart'; 
+          return { error: 'No cart found' };
       }
 
       // Calculate the total price for the order
       const [cartItems] = await connection.query(
-        'SELECT ci.quantity, mi.price FROM CartItems ci JOIN MenuItem mi ON ci.itemid = mi.itemid WHERE ci.cartid = ?',
-        [cartId]
+          'SELECT ci.quantity, mi.price FROM CartItems ci JOIN MenuItem mi ON ci.itemid = mi.itemid WHERE ci.cartid = ?',
+          [cartId]
       );
-  
+
       const totalPrice = cartItems.reduce((acc, currentItem) => {
-        return acc + (currentItem.quantity * currentItem.price);
+          return acc + (currentItem.quantity * currentItem.price);
       }, 0);
-  
+
       // Insert the new order into the Orders table
-      orderResult = await connection.query( // use let or const declared outside try
-        'INSERT INTO Orders (cartid, userid, ordertime, totalprice, orderstatus) VALUES (?, ?, NOW(), ?, ?)',
-        [cartId, userId, totalPrice, 'Pending']
+      orderResult = await connection.query(
+          'INSERT INTO Orders (cartid, userid, ordertime, totalprice, orderstatus) VALUES (?, ?, NOW(), ?, ?)',
+          [cartId, userId, totalPrice, 'Pending']
       );
-  
+
       await connection.commit();
       console.log(`Order placed successfully with ID: ${orderResult[0].insertId}`);
-    } catch (error) {
-      if (connection) await connection.rollback();
+  } catch (error) {
       console.error('Failed to place order:', error);
+      if (connection) await connection.rollback();
       throw error; // Rethrow the error to handle it in the calling function
-    } finally {
+  } finally {
       if (connection) await connection.release();
-    }
-    
-    return orderResult[0].insertId;
+  }
+  
+  return { orderId: orderResult[0].insertId };
 }
   
 async function printOrderDetails(pool, orderNumber) {
