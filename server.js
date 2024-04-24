@@ -7,14 +7,11 @@ const pdf = require('pdf-parse');
 
 
 
-const {
-  placeNewOrder, checkStatus, updateStatus, cancelOrder,
-  openMenu, addItem, deleteItem, searchItems, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF,
-  registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant, editUser, deleteUser,
-  addItemToCart, deleteItemFromCart, getCartItems, clearCart
-} = require('./orderFunctions'); // Adjusted imports for brevity
-
-const {userLogin,registerUser,verifyToken} = require('./userManagement'); // Adjusted imports for brevity
+const {placeNewOrder, checkStatus, updateStatus, cancelOrder,} = require('./orderFunctions');
+const {getCartItems,addItemToCart,deleteItemFromCart,clearCart} = require('./cartFunctions');
+const { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions');
+const { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant } = require('./restaurantManagement');
+const {registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken} = require('./userManagement');
 
 const hostname = '127.0.0.1';
 const port = 4002;
