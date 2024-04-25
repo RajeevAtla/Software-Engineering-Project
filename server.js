@@ -382,8 +382,7 @@ async function startServer() {
       }
     }
 
-
-
+    // Handle /charge endpoint for Stripe payments
 
     // Handle /charge endpoint for Stripe payments
     else if (pathname === '/charge' && method === 'POST') {
@@ -391,23 +390,31 @@ async function startServer() {
       req.on('data', chunk => body += chunk.toString());
       req.on('end', async () => {
         try {
-          const { amount, currency, source, receipt_email } = JSON.parse(body);
+          const { token, email } = JSON.parse(body);
+
+          // Here you would also include logic to calculate or retrieve the amount
+          const amount = 1099; // Example amount in cents ($10.99)
+
           const charge = await stripe.charges.create({
-            amount,
-            currency,
-            source,
-            receipt_email
+            amount: amount,
+            currency: 'usd',
+            description: 'Example charge',
+            source: token,
+            receipt_email: email
           });
+
+          // Instead of redirecting, return JSON response with charge details
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, charge }));
+          res.end(JSON.stringify({ success: true, charge: charge }));
         } catch (error) {
           console.error('Stripe charge error:', error);
+          // Here you might want to send back a JSON error response
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: error.message }));
         }
       });
-      return;
     }
+
 
     // Handle /transactions endpoint to fetch transaction data
     else if (pathname === '/transactions' && method === 'POST') {
@@ -475,7 +482,9 @@ async function startServer() {
       }
     }
     else if (pathname === '/cart/items' && method === 'GET') {
-      const cartId = query.cartId;
+      //const cartId = query.cartId;
+      //remove later 
+      const cartId = "1"
       if (cartId) {
         try {
           const items = await getCartItems(pool, cartId);

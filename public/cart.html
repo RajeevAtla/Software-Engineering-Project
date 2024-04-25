@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cart Checkout</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  fetch('/cart/items')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok ' + response.statusText);
+      }
+      return response.json();
+    })
+    .then(items => {
+      if (items.length === 0) {
+        document.getElementById('cart-contents').innerHTML = '<p>No items found in the cart.</p>';
+      } else {
+        let totalPrice = 0;
+        const itemsList = items.map(item => {
+          const itemTotal = parseFloat(item.price) * item.quantity;
+          totalPrice += itemTotal;
+          return `<li>${item.name} x ${item.quantity} - $${itemTotal.toFixed(2)}</li>`;
+        }).join('');
+        document.getElementById('cart-contents').innerHTML = `<ul>${itemsList}</ul>`;
+        document.getElementById('total-price').textContent = `Total: $${totalPrice.toFixed(2)}`;
+        localStorage.setItem('totalPrice', totalPrice); // Save total price for payment.html
+      }
+    })
+    .catch(error => {
+      document.getElementById('cart-contents').innerHTML = '<p>Error loading cart items.</p>';
+      console.error('Fetch error:', error);
+    });
+});
+
+function proceedToCheckout() {
+  window.location.href = '/payment.html'; // Redirect to payment page
+}
+</script>
+</head>
+<body>
+<h1>Your Cart</h1>
+<div id="cart-contents">
+  <!-- Cart items will be loaded here -->
+</div>
+<p id="total-price"></p>
+<button onclick="proceedToCheckout()">Checkout</button>
+</body>
+</html>
+

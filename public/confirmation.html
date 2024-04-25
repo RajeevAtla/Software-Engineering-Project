@@ -1,0 +1,19 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Payment Confirmation</title>
+</head>
+<body>
+<h1>Payment Confirmation</h1>
+<p>Your payment was successful!</p>
+<p>Confirmation Code: <span id="confirmation-code"></span></p>
+<script>
+// Extract confirmation code from URL
+const urlParams = new URLSearchParams(window.location.search);
+const code = urlParams.get('code');
+document.getElementById('confirmation-code').textContent = code;
+</script>
+</body>
+</html>

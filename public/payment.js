@@ -41,10 +41,20 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-// Submit the token and the rest of your form to the server
+
 function stripeTokenHandler(token) {
-  const amount = document.getElementById('amount').value;
-  const currency = document.getElementById('currency').value;
+  const amountElement = document.getElementById('amount');
+  const currencyElement = document.getElementById('currency');
+
+  if (!amountElement || !currencyElement) {
+    console.error('Payment form elements are missing!');
+    return;
+  }
+
+  const amount = amountElement.value;
+  const currency = currencyElement.value;
+
+
 
   fetch('/charge', {
     method: 'POST',
@@ -53,17 +63,22 @@ function stripeTokenHandler(token) {
     },
     body: JSON.stringify({
       token: token.id,
-      amount: amount * 100,  // Convert to cents
-      currency: currency,
-      receipt_email: 'customer@example.com'
+      email: document.getElementById('email').value
     }),
-  }).then(response => {
-    return response.json();
-  }).then(data => {
-    console.log(data);
-    alert('Payment successful!');
-  }).catch(error => {
-    console.error('Error:', error);
-    alert('Payment failed');
-  });
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        console.log('Payment successful:', data.charge);
+        // Redirect to a confirmation page or update the UI
+        window.location.href = `/confirmation.html?code=${data.charge.id}`;
+      } else {
+        throw new Error(data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Payment failed:', error);
+      alert('Payment failed: ' + error.message);
+    });
+
 }

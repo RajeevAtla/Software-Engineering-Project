@@ -1,31 +1,82 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="UTF-8">
-<title>Stripe Payment</title>
+<title>Process Payment</title>
 <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
 <h1>Process Payment</h1>
 <form id="payment-form">
-  <div>
-    <label for="amount">Amount:</label>
-    <input type="number" id="amount" name="amount" min="1" required>
-  </div>
-  <div>
-    <label for="currency">Currency:</label>
-    <input type="text" id="currency" name="currency" required value="usd">
-  </div>
-  <div>
-    <label for="card-element">Credit or debit card</label>
-    <div id="card-element">
-      <!-- A Stripe Element will be inserted here. -->
-    </div>
-  </div>
-  <div id="card-errors" role="alert"></div>
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="number" id="amount" placeholder="Amount" required readonly> <!-- Set readonly if you don't want it changed -->
+  <input type="text" id="currency" placeholder="Currency" required value="USD" readonly> <!-- Also set readonly if currency should not be changed -->
+  <div id="card-element"></div>
   <button type="submit">Submit Payment</button>
 </form>
+<div id="card-errors" role="alert"></div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Retrieve the total price from localStorage
+  const storedTotalPrice = localStorage.getItem('totalPrice');
+  const amountInput = document.getElementById('amount');
+
+  if (storedTotalPrice) {
+    // Populate the amount field automatically and format it if needed
+    amountInput.value = parseFloat(storedTotalPrice).toFixed(2);
+  }
+
+  // Initialize Stripe.js elements
+  const stripe = Stripe('pk_test_51P0ljm2N3QXdLmPgdMfyejewdDr2H8u9BFnFtLXtLh5kVGI6R4qb78ClMvuPutpG27kaTLhJ0M7vq39vnotrgofZ00KFLUK4Dc'); // Replace with your actual publishable key
+  const elements = stripe.elements();
+  const card = elements.create('card');
+  card.mount('#card-element');
+
+  // Handle form submission
+  const form = document.getElementById('payment-form');
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+    stripe.createToken(card).then(function(result) {
+      if (result.error) {
+        // Show error in your form's error div
+        document.getElementById('card-errors').textContent = result.error.message;
+      } else {
+        // Send the token and other form data to your server
+        stripeTokenHandler(result.token);
+      }
+    });
+  });
+});
+
+function stripeTokenHandler(token) {
+  // Implement your method to submit these details to your server
+  fetch('/charge', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: token.id,
+      amount: document.getElementById('amount').value, // Ensure this is sent in the smallest currency unit (e.g., cents)
+      currency: document.getElementById('currency').value,
+      email: document.getElementById('email').value
+    }),
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert('Payment successful!');
+    // Process your response further
+  })
+  .catch(error => {
+    console.error('Payment failed:', error);
+    alert('Payment failed');
+  });
+}
+</script>
 <script src="payment.js"></script>
 </body>
 </html>
+
