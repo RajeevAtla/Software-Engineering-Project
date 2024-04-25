@@ -162,6 +162,10 @@ async function startServer() {
         }
       }
     }
+    if (pathname === '/api/restaurants/all' && method === 'GET') {
+      // Get all restaurants
+      await getAllRestaurants(pool, req, res);
+    }
     else if (pathname === '/api/restaurants' && method === 'POST') {
       // Register a new restaurant
       await registerRestaurant(pool, req, res);
