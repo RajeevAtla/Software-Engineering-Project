@@ -1,17 +1,18 @@
 require('dotenv').config();
 const http = require('http');
 const url = require('url');
+const fs = require('fs');
+const path = require('path');
 const mysql = require('mysql2/promise');
+const stripe = require('stripe')(process.env.STRIPE_API_SECRET);
 const multer = require('multer');
 const pdf = require('pdf-parse');
 
-
-
-const {placeNewOrder, checkStatus, updateStatus, cancelOrder,} = require('./orderFunctions');
-const {getCartItems,addItemToCart,deleteItemFromCart,clearCart} = require('./cartFunctions');
-const { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions');
+const { placeNewOrder, checkStatus, updateStatus, cancelOrder, } = require('./orderFunctions');
+const { getCartItems, addItemToCart, deleteItemFromCart, clearCart } = require('./cartFunctions');
+const { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions');
 const { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant } = require('./restaurantManagement');
-const {registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken} = require('./userManagement');
+const { registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken } = require('./userManagement');
 
 const hostname = '127.0.0.1';
 const port = 4002;
@@ -47,9 +48,37 @@ async function startServer() {
     const query = parsedUrl.query; // Extract the query string as an object
 
     res.setHeader('Content-Type', 'application/json'); // JSON response for all endpoints
-
+    if (pathname.match(/\.(html|js|css|jpg|png|gif|ico)$/)) {
+      const filePath = path.join(__dirname, 'public', pathname);
+      fs.readFile(filePath, (err, content) => {
+        if (err) {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Not found');
+          return;
+        }
+        // Extract the file extension and determine the correct content type
+        const ext = path.extname(pathname);
+        const mimeType = {
+          '.ico': 'image/x-icon',
+          '.html': 'text/html',
+          '.js': 'text/javascript',
+          '.json': 'application/json',
+          '.css': 'text/css',
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.wav': 'audio/wav',
+          '.mp3': 'audio/mpeg',
+          '.svg': 'image/svg+xml',
+          '.pdf': 'application/pdf',
+          '.doc': 'application/msword'
+        };
+        res.setHeader('Content-Type', mimeType[ext] || 'text/plain');
+        res.end(content);
+      });
+      return;
+    }
     // Handling for /api/orders route from the first server
-    if (pathname === '/api/orders' && method === 'POST') {
+    else if (pathname === '/api/orders' && method === 'POST') {
       let body = '';
       req.on('data', chunk => {
         body += chunk.toString(); // Convert Buffer to string
@@ -64,7 +93,7 @@ async function startServer() {
             res.end(JSON.stringify({ message: 'Auth token is not supplied' }));
             return;
           }
-    
+
           let decoded;
           try {
             decoded = verifyToken(token);
@@ -73,12 +102,12 @@ async function startServer() {
             res.end(JSON.stringify({ message: 'Token is invalid' }));
             return;
           }
-    
+
           const { cartId } = JSON.parse(body);
           const userId = decoded.userId; // Assuming your token stores the userId
-    
-          const result = await placeNewOrder(pool, cartId, userId,token);
-    
+
+          const result = await placeNewOrder(pool, cartId, userId, token);
+
           if (result == 'no cart') {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'Cart id not found' }));
@@ -356,6 +385,55 @@ async function startServer() {
 
 
 
+    // Handle /charge endpoint for Stripe payments
+    else if (pathname === '/charge' && method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk.toString());
+      req.on('end', async () => {
+        try {
+          const { amount, currency, source, receipt_email } = JSON.parse(body);
+          const charge = await stripe.charges.create({
+            amount,
+            currency,
+            source,
+            receipt_email
+          });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, charge }));
+        } catch (error) {
+          console.error('Stripe charge error:', error);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: error.message }));
+        }
+      });
+      return;
+    }
+
+    // Handle /transactions endpoint to fetch transaction data
+    else if (pathname === '/transactions' && method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk.toString());
+      req.on('end', async () => {
+        try {
+          const { userid } = JSON.parse(body);
+          const pool = await poolPromise;
+          const results = await transaction(pool, userid);
+          if (results.length === 0) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'User id not found' }));
+          } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ transactions: results }));
+          }
+        } catch (error) {
+          console.error('Transaction fetch error:', error);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Failed to fetch transactions' }));
+        }
+      });
+      return;
+    }
+
 
 
 
@@ -456,6 +534,13 @@ async function startServer() {
     console.log(`Server running at http://${hostname}:${port}/`);
   });
 }
-
-console.log('JWT Secret:', process.env.ACCESS_TOKEN_SECRET);
+async function transaction(pool, userid) {
+  try {
+    const [results] = await pool.execute('SELECT * FROM Transactions WHERE userid = ?', [userid]);
+    return results;
+  } catch (error) {
+    console.error('Database transaction error:', error);
+    throw error;  // Rethrow the error to be caught by the caller
+  }
+}
 startServer();
