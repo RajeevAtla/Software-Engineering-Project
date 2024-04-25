@@ -9,8 +9,8 @@ const pdf = require('pdf-parse');
 
 const {placeNewOrder, checkStatus, updateStatus, cancelOrder,} = require('./orderFunctions');
 const {getCartItems,addItemToCart,deleteItemFromCart,clearCart} = require('./cartFunctions');
-const { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions');
-const { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant } = require('./restaurantManagement');
+const { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions');
+const { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant, getAllRestaurants } = require('./restaurantManagement');
 const {registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken} = require('./userManagement');
 
 const hostname = '127.0.0.1';
@@ -46,6 +46,9 @@ async function startServer() {
     const method = req.method; // Get the HTTP method
     const query = parsedUrl.query; // Extract the query string as an object
 
+    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500'); // Allows access specifically from your front-end
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); // Adjust if you use other methods
+    res.setHeader('Access-Control-Allow-Headers', 'application/json'); // Adjust based on what headers your client sends
     res.setHeader('Content-Type', 'application/json'); // JSON response for all endpoints
 
     // Handling for /api/orders route from the first server

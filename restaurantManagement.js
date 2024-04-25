@@ -131,7 +131,7 @@ async function getAllRestaurants(pool, req, res) {
   let db;
   try {
     db = await pool.getConnection(); // Get a connection from the pool
-    const [results] = await db.query('SELECT * FROM Restaurant'); // Execute the query to get all restaurants
+    const [results] = await db.query('SELECT name FROM Restaurant'); // Execute the query to get all restaurants
 
     if (results.length === 0) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -152,4 +152,4 @@ async function getAllRestaurants(pool, req, res) {
 }
 
 
-module.exports = { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant };
+module.exports = { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant, getAllRestaurants };
