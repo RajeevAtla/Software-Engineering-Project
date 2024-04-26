@@ -56,16 +56,43 @@ function stripeTokenHandler(token) {
   const currency = currencyElement.value;
 
 
+  function getAmount() {
+    let amount = parseInt(document.getElementById('amount').value * 100);
+    // alert(amount);
+    return amount;
+  }
+
+
+  function getEmail() {
+    let email = document.getElementById('email').value;
+    // alert(email);
+    return email;
+  }
+
+  function getCurrency() {
+    let currency = document.getElementById('currency').value;
+    // alert(currency);
+    return currency;
+  }
 
   fetch('/charge', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      token: token.id,
-      email: document.getElementById('email').value
-    }),
+    body: JSON.stringify(
+      {
+        userid: 1,
+        cartid: 1,
+        token: "please update with jwt_token",
+        transaction: {
+          source: token.id,
+          receipt_email: getEmail(),
+          amount: getAmount(),
+          currency: getCurrency(),
+          description: "Example charge"
+        }
+      }),
   })
     .then(response => response.json())
     .then(data => {

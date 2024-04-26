@@ -392,34 +392,28 @@ async function startServer() {
       req.on('data', chunk => body += chunk.toString());
       req.on('end', async () => {
         try {
-          const { token, email, cartid, userid, jwt_token } = JSON.parse(body);
+          const { userid, cartid, token, transaction } = JSON.parse(body);
 
           // Here you would also include logic to calculate or retrieve the amount
-          const amount = 1099; // Example amount in cents ($10.99)
+          // const amount = 1099; // Example amount in cents ($10.99)
 
-          const charge = await stripe.charges.create({
-            amount: amount,
-            currency: 'usd',
-            description: 'Example charge',
-            source: token,
-            receipt_email: email
-          });
+          const charge = await stripe.charges.create(transaction);
 
           // publish the success to restaurants and log
           // doctor.bind(doctors_office, x => console.log("Doctor's notif " + x));
           const restuarant_notif = new utils.TerminalBonder();
           const order_log = new utils.TerminalBonder();
           const transaction_pub = new utils.Publisher();
-          restuarant_notif.bind(transaction_pub, (x) => RestaurantNotifier(pool, x) );
-          restuarant_notif.bind(order_log, (x) => OrderLogging(pool, x));
+          restuarant_notif.bind(transaction_pub, (x) => RestaurantNotifier(pool, x));
+          order_log.bind(transaction_pub, (x) => OrderLogging(pool, x));
 
           // 'INSERT INTO Orders (cartid, userid, ordertime, totalprice, orderstatus) VALUES (?, ?, NOW(), ?, ?)',
-          const order = { 
+          const order = {
             cartid: cartid,
             userid: userid,
-            token: jwt_token,
+            token: token
           }
-          restuarant_notif.publish(order);
+          transaction_pub.publish(order);
 
           // Instead of redirecting, return JSON response with charge details
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -585,7 +579,8 @@ async function RestaurantNotifier(pool, data) {
   // how we will notify restaurant tbd
 }
 async function OrderLogging(pool, data) {
-  
+  console.log("i am order logging ooooooooo");
+
   // using cartid find userid
   //
   // using cartid and userid insert orders using placeNewOrder function from orderFunctions
