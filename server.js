@@ -411,7 +411,8 @@ async function startServer() {
           const order = {
             cartid: cartid,
             userid: userid,
-            token: token
+            token: token,
+            email: transaction.receipt_email
           }
           transaction_pub.publish(order);
 
