@@ -20,7 +20,7 @@ async function main(){
 
     const info = await transporter.sendMail({
         from: 'PickupPlus <pickupplusru@gmail.com>',
-        to: 'smithg1228@gmail.com',
+        to: process.env.SMTP_TESTER,
         subject: 'Order Confirmation Test Message',
         html: html
     });
