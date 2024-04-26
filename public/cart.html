@@ -4,6 +4,69 @@
 <head>
 <meta charset="UTF-8">
 <title>Cart Checkout</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f4f4f4;
+    }
+
+    h1 {
+        background-color: #ff4500;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        margin: 0;
+    }
+
+    #cart-contents {
+        width: 80%;
+        margin: auto;
+        padding: 20px;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin-top: 20px;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        padding: 5px 0;
+        color: #333;
+    }
+
+    #total-price {
+        font-size: 18px;
+        color: #ff4500;
+        width: 80%;
+        margin: auto;
+        padding: 10px;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        text-align: right;
+        margin-bottom: 20px;
+    }
+
+    button {
+        display: block;
+        width: 80%;
+        padding: 10px;
+        margin: 20px auto;
+        background-color: #ff4500;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    button:hover {
+        background-color: #e03e00;
+    }
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   fetch('/cart/items')

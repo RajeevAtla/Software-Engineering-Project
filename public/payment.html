@@ -1,10 +1,69 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="UTF-8">
 <title>Process Payment</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f4f4f4;
+    }
+
+    h1 {
+        background-color: #ff4500;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        margin: 0;
+    }
+
+    form {
+        width: 80%;
+        margin: 20px auto;
+        background: white;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input[type="email"], input[type="number"], input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        margin: 10px 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+        font-size: 16px;
+    }
+
+    #card-element {
+        margin: 10px 0;
+        padding: 8px;
+        border: 1px solid #ccc;
+        background-color: white;
+    }
+
+    button {
+        width: 100%;
+        padding: 10px;
+        background-color: #ff4500;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    button:hover {
+        background-color: #e03e00;
+    }
+
+    #card-errors {
+        color: #ff4500;
+        margin: 10px 0;
+    }
+</style>
 <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
