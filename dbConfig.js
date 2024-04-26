@@ -16,7 +16,7 @@ function configureDatabase() {
         poolConfig = {
           host: 'localhost',
           user: 'root',
-          password: 'i<3rutgers',
+          password: 'sweteam',
           database: 'PickupPlus',
           waitForConnections: true,
           connectionLimit: 10,

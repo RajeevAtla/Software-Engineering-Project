@@ -127,4 +127,29 @@ async function deleteRestaurant(pool, req, res, restaurantId) {
   }
 }
 
-module.exports = { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant };
+async function getAllRestaurants(pool, req, res) {
+  let db;
+  try {
+    db = await pool.getConnection(); // Get a connection from the pool
+    const [results] = await db.query('SELECT name FROM Restaurant'); // Execute the query to get all restaurants
+
+    if (results.length === 0) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "No restaurants found" }));
+      return;
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(results)); // Send the results as JSON
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: "Internal server error", error: error.message }));
+  } finally {
+    if (db) {
+      db.release(); // Release the connection back to the pool
+    }
+  }
+}
+
+
+module.exports = { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant, getAllRestaurants };
