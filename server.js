@@ -1,15 +1,16 @@
-require('dotenv').config();
+require('dotenv').config({ path: 'SPOILER_.env' });
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
 const pdf = require('pdf-parse');
-
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 
 const {placeNewOrder, checkStatus, updateStatus, cancelOrder,} = require('./orderFunctions');
 const {getCartItems,addItemToCart,deleteItemFromCart,clearCart} = require('./cartFunctions');
-const { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions');
+const { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions');
 const { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant } = require('./restaurantManagement');
 const {registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken} = require('./userManagement');
 
@@ -30,6 +31,65 @@ const upload = multer({
 
 const configureDatabase = require('./dbConfig');
 
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: "http://localhost:4002/auth/google/callback"
+}, function(accessToken, refreshToken, profile, cb) {
+  console.log('Google Profile:', profile); // Log to verify that this point is reached
+  return cb(null, profile);
+}));
+
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+  done(null, { id: id });
+});
+
+const server = http.createServer((req, res) => {
+  const parsedUrl = url.parse(req.url, true);
+  console.log('Request URL:', req.url); // Log to verify request URL
+
+  // Route for initiating Google Authentication
+  if (parsedUrl.pathname === '/auth/google') {
+    console.log('Authenticating with Google');
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res);
+  }
+
+  // Google OAuth2 callback route
+  else if (parsedUrl.pathname === '/auth/google/callback') {
+    passport.authenticate('google', { failureRedirect: '/login' }, (err, user, info) => {
+      if (err || !user) {
+        console.log('Authentication failed', err);
+        res.writeHead(302, { 'Location': '/login' });
+        res.end();
+        return;
+      }
+      req.login(user, (err) => {
+        if (err) {
+          console.log('Login error', err);
+          res.writeHead(302, { 'Location': '/login' });
+          res.end();
+          return;
+        }
+        res.writeHead(302, { 'Location': '/' }); // Redirect to home page or dashboard
+        res.end();
+      });
+    })(req, res);
+  }
+
+  else {
+    res.writeHead(404, { 'Content-Type': 'text/html' });
+    res.end('<h1>404 Not Found</h1>');
+  }
+});
+
+server.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
+});
+
 async function startServer() {
   let pool;
   try {
@@ -37,7 +97,7 @@ async function startServer() {
     console.log('Database configured and pool created.');
   } catch (error) {
     console.error('Failed to configure the database:', error);
-    return; // Stop the server from starting
+    return; 
   }
 
   const server = http.createServer(async (req, res) => {
