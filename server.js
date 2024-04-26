@@ -85,14 +85,17 @@ async function startServer() {
           if (result == 'no cart') {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'Cart id not found' }));
-          } else if (result == 'no user') {
+          } 
+          else if (result == 'no user') {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'User id not found' }));
-          } else {
+          } 
+          else {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ orderId: result, message: 'Order created successfully' }));
           }
-        } catch (error) {
+        } 
+        catch (error) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Failed to create order', details: error.message }));
         }
@@ -165,7 +168,7 @@ async function startServer() {
         }
       }
     }
-    if (pathname === '/api/restaurants/all' && method === 'GET') {
+    else if (pathname === '/api/restaurants/all' && method === 'GET') {
       // Get all restaurants
       await getAllRestaurants(pool, req, res);
     }
@@ -359,17 +362,6 @@ async function startServer() {
         res.end(JSON.stringify({ error: 'Invalid URL format' }));
       }
     }
-
-
-
-
-
-
-
-
-
-
-
     // Cart Functions
     else if (pathname === '/cart/add' && method === 'POST') {
       const { cartId, itemId, quantity } = query;

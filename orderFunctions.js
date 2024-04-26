@@ -5,18 +5,11 @@ async function placeNewOrder(pool, cartId, userId, token) {
   let connection;
 
   try {
-      // Verify the token and extract user ID
-      if (!token) {
-          return { error: 'No token provided' };
-      }
-
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-      if (decoded.userId !== userId) {
-          return { error: 'Unauthorized' }; // Make sure the userId from the token matches the userId parameter
-      }
+      // Verify the token using the external function
+      const decoded = verifyJWTToken(token, userId); // This will throw an error if verification fails
 
       connection = await pool.getConnection();
-    
+
       // Checks if the user id inputted exists
       const [user] = await connection.query('SELECT userid FROM User WHERE userid = ?', [userId]);
       if (user.length === 0) {
@@ -54,7 +47,7 @@ async function placeNewOrder(pool, cartId, userId, token) {
   } finally {
       if (connection) await connection.release();
   }
-  
+
   return { orderId: orderResult[0].insertId };
 }
   
@@ -209,6 +202,20 @@ async function cancelOrder(pool, orderNumber){
     connection.release(); // Release the connection back to the pool
     }
 
+}
+
+
+function verifyJWTToken(token, userId) {
+  if (!token) {
+      throw new Error('No token provided');
+  }
+
+  const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  if (decoded.userId !== userId) {
+      throw new Error('Unauthorized');
+  }
+
+  return decoded; // Return the decoded token for further use if necessary
 }
 
 
