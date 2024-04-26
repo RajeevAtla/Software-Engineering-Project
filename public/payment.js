@@ -1,4 +1,3 @@
-
 var stripe = Stripe('pk_test_51P0ljm2N3QXdLmPgdMfyejewdDr2H8u9BFnFtLXtLh5kVGI6R4qb78ClMvuPutpG27kaTLhJ0M7vq39vnotrgofZ00KFLUK4Dc');
 
 var elements = stripe.elements();
@@ -9,6 +8,8 @@ var style = {
     color: "#32325d",
   }
 };
+
+
 
 // Create an instance of the card Element
 var card = elements.create('card', { style: style });
@@ -72,6 +73,9 @@ function stripeTokenHandler(token) {
         console.log('Payment successful:', data.charge);
         // Redirect to a confirmation page or update the UI
         window.location.href = `/confirmation.html?code=${data.charge.id}`;
+        // emit event to restaurants for purchase order
+        // emit event order log
+        //
       } else {
         throw new Error(data.error);
       }
