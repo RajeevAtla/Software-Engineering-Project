@@ -392,7 +392,7 @@ async function startServer() {
       req.on('data', chunk => body += chunk.toString());
       req.on('end', async () => {
         try {
-          const { token, email, cartid } = JSON.parse(body);
+          const { token, email, cartid, userid, jwt_token } = JSON.parse(body);
 
           // Here you would also include logic to calculate or retrieve the amount
           const amount = 1099; // Example amount in cents ($10.99)
@@ -416,9 +416,10 @@ async function startServer() {
           // 'INSERT INTO Orders (cartid, userid, ordertime, totalprice, orderstatus) VALUES (?, ?, NOW(), ?, ?)',
           const order = { 
             cartid: cartid,
-            
+            userid: userid,
+            token: jwt_token,
           }
-          restuarant_notif.publish(charge);
+          restuarant_notif.publish(order);
 
           // Instead of redirecting, return JSON response with charge details
           res.writeHead(200, { 'Content-Type': 'application/json' });
