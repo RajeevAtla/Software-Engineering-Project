@@ -31,13 +31,14 @@
             .then(menuItems => {
                 const list = document.getElementById('restaurant-list');
                 list.innerHTML = ''; // Clear previous entries
+                console.log(menuItems)
                 menuItems.forEach(menuItem => {
                     const item = document.createElement('li');
                     item.innerHTML = `
                         <h3>${menuItem.name}</h3>
                         <p>Description: ${menuItem.description}</p>
                         <p>Price: $${menuItem.price}</p>
-                        <button onclick="addToCart(${menuItem.itemid}, '${menuItem.name}', '${menuItem.description}', ${menuItem.price})">Add to Cart</button>
+<button onclick="addToCart(${menuItem.itemid}, '${menuItem.name}', '${menuItem.description}', ${menuItem.price})">Add to Cart</button>
                     `;
                     list.appendChild(item);
                 });

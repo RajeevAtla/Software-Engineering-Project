@@ -3,8 +3,7 @@ CREATE DATABASE IF NOT EXISTS PickupPlus;
 USE PickupPlus;
 
 -- Drop existing tables to prevent foreign key constraint errors
--- Drop tables in reverse order of their dependencie
-DROP TABLE IF EXISTS Transactions;
+-- Drop tables in reverse order of their dependencies
 DROP TABLE IF EXISTS Orders;
 DROP TABLE IF EXISTS CartItems;
 DROP TABLE IF EXISTS Cart;
@@ -14,7 +13,7 @@ DROP TABLE IF EXISTS User;
 
 -- Recreate tables with the new schema
 CREATE TABLE User (
-  userid INT AUTO_INCREMENT PRIMARY KEY , 
+  userid INT PRIMARY KEY, 
   firstname VARCHAR(255),
   lastname VARCHAR(255), 
   address VARCHAR(255),
@@ -31,8 +30,7 @@ CREATE TABLE Restaurant (
   address VARCHAR(255),
   email VARCHAR(255),
   phonenumber VARCHAR(255),
-  category VARCHAR(255), 
-  password VARCHAR(255)
+  category VARCHAR(255) 
 );
 
 CREATE TABLE MenuItem (
@@ -71,22 +69,19 @@ CREATE TABLE Orders (
   FOREIGN KEY (userid) REFERENCES User(userid)
 );
 
-CREATE TABLE Transactions (
-  transactionid INT AUTO_INCREMENT PRIMARY KEY,
-  orderid INT,
-  restaurantid INT,
-  userid INT,
-  totalprice INT,
-  FOREIGN KEY (orderid) REFERENCES Orders(orderid),
-  FOREIGN KEY (restaurantid) REFERENCES Restaurant(restaurantid),
-  FOREIGN KEY (userid) REFERENCES User(userid)
-);
 
 INSERT INTO User (userid, firstname, lastname, address, email, phonenumber, password, salt, role) VALUES
 (1, 'Jane', 'Doe', '123 Elm Street', 'jane.doe@example.com', '555-1234', 'hashed_password_here', 'salt_here', 'customer');
 
+-- Populate table with some example restaurants
 INSERT INTO Restaurant (restaurantid, name, address, email, phonenumber, category) VALUES
 (1, 'Pizza Palace', '456 Main Street', 'info@pizzapalace.com', '555-5678', 'Italian');
+
+INSERT INTO Restaurant (restaurantid, name, address, email, phonenumber, category) VALUES
+(2, 'Papa Johns', '123 example street', 'papa@ojohns.com', '555-5678', 'Pizza');
+
+INSERT INTO Restaurant (restaurantid, name, address, email, phonenumber, category) VALUES
+(3, 'Chipotle', '99 test avenue', 'chipotle@gmail.com', '555-5678', 'Mexican');
 
 -- Add a pizza item
 INSERT INTO MenuItem (restaurantid, name, description, price) VALUES
@@ -111,5 +106,15 @@ INSERT INTO CartItems (cartid, itemid, quantity) VALUES
 INSERT INTO Orders (cartid, userid, ordertime, orderstatus) VALUES
 (1, 1, NOW(), 'Pending');
 
-INSERT INTO Transactions (orderid, restaurantid,userid, totalprice ) VALUES
-( 1, 1,1, 20);
+INSERT INTO MenuItem (restaurantid, name, description, price) VALUES
+(3, 'Burrito Bowl', 'Burrito bowl made with ingredients of your choice', 10.00);
+
+-- Add a pasta item
+INSERT INTO MenuItem (restaurantid, name, description, price) VALUES
+(3, 'Burrito', 'Burrito wrapped in a tortilla', 12.00);
+
+INSERT INTO MenuItem (restaurantid, name, description, price) VALUES
+(2, 'Papa Pizza', 'Full pie of a large sized pizza from a delicious oven', 10.00);
+
+INSERT INTO MenuItem (restaurantid, name, description, price) VALUES
+(2, 'Pizza', 'Full pie of a delicious oven cooked pizza', 12.00);
