@@ -4,6 +4,7 @@ const url = require('url');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
 const pdf = require('pdf-parse');
+const nodeMailer = require('nodemailer');
 
 
 

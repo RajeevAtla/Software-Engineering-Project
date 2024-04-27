@@ -27,5 +27,40 @@ async function main(){
 
     console.log("message sent:" + info.messageId)
 }
+
+
+async function sendOrderConfirmationEmail(userEmail, orderId) {
+    const html = `
+        <H1>Thank you for your order!</H1>
+        <p>Your order has been placed successfully. We will notify you once your order is ready for pickup. Your order ID is ${orderId}.</p>
+    `;
+
+    const transporter = nodeMailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+        }
+    });
+
+    const info = await transporter.sendMail({
+        from: 'PickupPlus <pickupplusru@gmail.com>',
+        to: userEmail,
+        subject: 'Order Confirmation',
+        html: html
+    });
+
+    console.log("Message sent: " + info.messageId);
+}
+
+
+
 console.log(process.env.SMTP_USER);
-main();
+//main();
+
+
+
+
+module.exports = {sendOrderConfirmationEmail}

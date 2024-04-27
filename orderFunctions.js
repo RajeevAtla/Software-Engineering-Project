@@ -1,38 +1,34 @@
 const jwt = require('jsonwebtoken')
+
+const{sendOrderConfirmationEmail} = require('./notificationHandling.js');
 // Function to place a new order
 async function placeNewOrder(pool, cartId, userId, token) {
-  let orderResult; // Declare orderResult outside the try block to widen its scope
+  let orderResult;
   let connection;
+  let userEmail;
 
   try {
-      // Verify the token using the external function
-      const decoded = verifyJWTToken(token, userId); // This will throw an error if verification fails
-
+      const decoded = verifyJWTToken(token, userId);
       connection = await pool.getConnection();
 
-      // Checks if the user id inputted exists
-      const [user] = await connection.query('SELECT userid FROM User WHERE userid = ?', [userId]);
+      const [user] = await connection.query('SELECT email FROM User WHERE userid = ?', [userId]);
       if (user.length === 0) {
           return { error: 'No user found' };
       }
+      userEmail = user[0].email;
 
-      // Checks if the cart id inputted exists
       const [cart] = await connection.query('SELECT cartid FROM Cart WHERE cartid = ?', [cartId]);
       if (cart.length === 0) {
           return { error: 'No cart found' };
       }
 
-      // Calculate the total price for the order
       const [cartItems] = await connection.query(
           'SELECT ci.quantity, mi.price FROM CartItems ci JOIN MenuItem mi ON ci.itemid = mi.itemid WHERE ci.cartid = ?',
           [cartId]
       );
 
-      const totalPrice = cartItems.reduce((acc, currentItem) => {
-          return acc + (currentItem.quantity * currentItem.price);
-      }, 0);
+      const totalPrice = cartItems.reduce((acc, currentItem) => acc + currentItem.quantity * currentItem.price, 0);
 
-      // Insert the new order into the Orders table
       orderResult = await connection.query(
           'INSERT INTO Orders (cartid, userid, ordertime, totalprice, orderstatus) VALUES (?, ?, NOW(), ?, ?)',
           [cartId, userId, totalPrice, 'Pending']
@@ -40,10 +36,12 @@ async function placeNewOrder(pool, cartId, userId, token) {
 
       await connection.commit();
       console.log(`Order placed successfully with ID: ${orderResult[0].insertId}`);
+
+      await sendOrderConfirmationEmail(userEmail, orderResult[0].insertId);
   } catch (error) {
       console.error('Failed to place order:', error);
       if (connection) await connection.rollback();
-      throw error; // Rethrow the error to handle it in the calling function
+      throw error;
   } finally {
       if (connection) await connection.release();
   }
