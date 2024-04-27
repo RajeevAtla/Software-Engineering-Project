@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurants - Pickup Plus</title>
+    <title>Pizza Palace - Pickup Plus</title>
     <link rel="stylesheet" href="restaurants_style.css">
 </head>
 <body>
@@ -14,43 +14,48 @@
         <a href="contact.html">Contact</a>
     </div>
     <header>
-        <h1>Our Restaurants</h1>
+        <h1>Pizza Palace Menu</h1>
     </header>
-    <button id="loadMenuButton">Load Menu</button>
+    <div id="menuList">
         <ul id="restaurant-list"></ul>
-        <script>
-            document.getElementById('loadMenuButton').addEventListener('click', function() {
-                fetch('http://127.0.0.1:4002/menu?restaurantID=1') // Ensure your server endpoint matches
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(restaurants => {
-                    const list = document.getElementById('restaurant-list');
-                    list.innerHTML = ''; // Clear previous entries
-                    restaurants.forEach(restaurant => {
-                        const item = document.createElement('li');
-                        item.textContent = restaurant.name; // Assuming 'name' is a field in your restaurant data
-                        list.appendChild(item);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching menu:', error);
-                    alert('Failed to load menu.');
-                });
-            });
-        </script>
-</div>
-    <div>
-        <button onclick="location.href='pickupplus.html';"> Option 1</a>
-        <button onclick="location.href='papajohn.html';"> Option 2</button>
-        <button onclick="location.href='chipotle.html';"> Option 3</button>
     </div>
-    <footer>
-        <p>Pickup Plus Â© 2024</p>
-    </footer>
+    <script>
+     
+            fetch('http://127.0.0.1:4002/menu?restaurantID=1') // Endpoint for Pizza Palace menu
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(menuItems => {
+                const list = document.getElementById('restaurant-list');
+                list.innerHTML = ''; // Clear previous entries
+                menuItems.forEach(menuItem => {
+                    const item = document.createElement('li');
+                    item.innerHTML = `
+                        <h3>${menuItem.name}</h3>
+                        <p>Description: ${menuItem.description}</p>
+                        <p>Price: $${menuItem.price}</p>
+                        <button onclick="addToCart(${menuItem.itemid}, '${menuItem.name}', '${menuItem.description}', ${menuItem.price})">Add to Cart</button>
+                    `;
+                    list.appendChild(item);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching menu:', error);
+                alert('Failed to load menu.');
+            });
+        ;
 
+        function addToCart(itemId, itemName, itemDescription, itemPrice) {
+            console.log('Adding item to cart:', { itemId, itemName, itemDescription, itemPrice });
+            // Here you can perform the logic to add the item to the cart
+        }
+    </script>
+    
+    <footer>
+        <p>Pickup Plus © 2024</p>
+    </footer>
 </body>
 </html>

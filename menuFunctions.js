@@ -1,8 +1,8 @@
-async function openMenu(pool, restaurantID, res) { // Include `res` as a parameter
+async function openMenu(pool, restaurantID, res) {
   let connection;
   try {
     connection = await pool.getConnection();
-    const query = 'SELECT * FROM MenuItem WHERE restaurantid = ?';
+    const query = 'SELECT name, description, price FROM MenuItem WHERE restaurantid = ?'; // Include price in the SELECT query
     const [results] = await connection.query(query, [restaurantID]);
 
     if (results.length === 0) {
@@ -17,11 +17,12 @@ async function openMenu(pool, restaurantID, res) { // Include `res` as a paramet
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ message: "Internal server error", error: error.message }));
   } finally {
-    if (connection) { // Use `connection` instead of `db`
+    if (connection) {
       connection.release();
     }
   }
 }
+
 
 async function addItem(pool, restaurantId, name, description, price) {
   console.log("Attempting to add item:", { restaurantId, name, description, price });
