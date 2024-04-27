@@ -2,7 +2,7 @@ async function openMenu(pool, restaurantID, res) {
   let connection;
   try {
     connection = await pool.getConnection();
-    const query = 'SELECT name, description, price FROM MenuItem WHERE restaurantid = ?'; // Include price in the SELECT query
+    const query = 'SELECT itemid, name, description, price FROM MenuItem WHERE restaurantid = ?'; // Include price in the SELECT query
     const [results] = await connection.query(query, [restaurantID]);
 
     if (results.length === 0) {
