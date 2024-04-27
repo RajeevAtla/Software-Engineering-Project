@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Display</title>
+    <link rel="stylesheet" href="cart.css">
+</head>
+<body>
+    <h1>Your Cart</h1>
+    <div class="top-bar">
+        <div class="tab"><a href="index.html">Home</a></div>
+        <div class="tab"><a href="restaurants.html">Restaurants</a></div>
+        <div class="tab"><a href="about.html">About</a></div>
+        <div class="tab"><a href="contact.html">Contact</a></div>
+        <div class="tab"><a href="login.html">Login</a></div>
+        <div class="tab"><a href="cart.html">Cart</a></div>
+    </div>
+    <div>
+        <ul id="cart">
+            
+        </ul>
+        <strong>Total: $0</strong>
+    </div>
+
+    <script>
+        // Example of fetching cart data
+        function fetchCartData() {
+            fetch('http://127.0.0.1:4002/cart/items', {
+                method: 'GET', 
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) { 
+                    throw new Error('Network response was not ok');
+                }
+                return response.json(); 
+            })
+            .then(data => {
+                console.log('Cart data:', data); 
+            })
+            .catch(error => {
+                console.error('Failed to fetch cart data:', error); 
+            });
+            
+        }
+
+        function displayCart(items) {
+            const cartList = document.getElementById('cart');
+            cartList.innerHTML = '';
+            let total = 0;
+
+            items.forEach(item => {
+                total += item.price * item.quantity;
+                const li = document.createElement('li');
+                li.textContent = `${item.name} - $${item.price} x ${item.quantity}`;
+                cartList.appendChild(li);
+            });
+
+            document.querySelector('strong').textContent = 'Total: $' + total;
+        }
+
+        fetchCartData().then(items => {
+            displayCart(items);
+        });
+    </script>
+</body>
+</html>

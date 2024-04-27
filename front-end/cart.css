@@ -1,0 +1,187 @@
+/* Basic Reset and Typography */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Nunito', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    padding: 20px;
+}
+.top-bar {
+    background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+    color: white; /* White text color for better contrast */
+    padding: 10px 20px;
+    text-align: center;
+}
+/* Main Heading */
+h1 {
+    text-align: center;
+    color: #3cb371;
+    margin-bottom: 20px;
+}
+
+/* Cart Container */
+#cart {
+    list-style: none;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+}
+
+/* Cart Items Styling */
+#cart li {
+    font-size: 16px;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Total Display */
+strong {
+    display: block;
+    text-align: center;
+    font-size: 20px;
+    color: #000;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    #cart {
+        width: 100%;
+    }
+}
+
+.tab {
+    display: inline-block;
+    margin: 0 10px;
+    padding: 5px 10px;
+    border-radius: 50%; /* Make the box circular */
+    border: 2px solid white; /* White border for contrast */
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+}
+
+.tab a {
+    color: white; /* White text color for better contrast */
+    text-decoration: none;
+}
+
+.tab:hover {
+    background-color: #3cb371; /* Change background color on hover */
+    color: white; /* Change text color on hover */
+    transform: scale(1.1); /* Scale effect on hover */
+}
+
+header {
+    text-align: center;
+    padding: 50px 20px;
+    color: #3cb371; /* Green header text color */
+    animation: fadeIn 1s ease; /* Fade-in animation */
+}
+
+.hero {
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.hero h1 {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333; /* Dark grey hero text color */
+}
+
+.hero p {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.cta-button {
+    background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 25px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+    background: linear-gradient(to right, #00bfff, #3cb371); /* Gradient from blue to green on hover */
+    transform: translateY(-3px); /* Move button up on hover */
+}
+
+.footer {
+    background-color: #333; /* Dark grey footer background */
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* New CSS for the content section */
+.content-section {
+    font-family: 'Nunito', sans-serif; /* Nunito font */
+    background-color: white;
+    padding: 50px 20px;
+    text-align: center;
+    animation: fadeIn 1s ease; /* Fade-in animation */
+}
+
+.content-section h2 {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.content-section p {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+/* Adjusted CSS for navigation links */
+.nav-links {
+    font-family: 'Nunito', sans-serif; /* Nunito font */
+    color: white; /* White text color for better contrast */
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 18px;
+    font-weight: bold;
+    transition: color 0.3s ease; /* Smooth transition on hover */
+}
+
+.nav-links:hover {
+    color: #00bfff; /* Change text color on hover */
+}
+
+/* New CSS for bottom bar */
+.bottom-bar {
+    background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+    color: white; /* White text color for better contrast */
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

@@ -42,6 +42,11 @@ async function startServer() {
   }
 
   const server = http.createServer(async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500'); // Allows access specifically from your front-end
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); // Adjust if you use other methods
+    res.setHeader('Access-Control-Allow-Headers', 'application/json'); // Adjust based on what headers your client sends
+    res.setHeader('Content-Type', 'application/json'); // JSON response for all endpoints
+
     const parsedUrl = url.parse(req.url, true); // Parse the URL of the request
     const pathname = parsedUrl.pathname; // Get the pathname
     const method = req.method; // Get the HTTP method
