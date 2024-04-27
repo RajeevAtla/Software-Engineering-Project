@@ -20,8 +20,7 @@
         <ul id="restaurant-list"></ul>
     </div>
     <script>
-     
-            fetch('http://127.0.0.1:4002/menu?restaurantID=1') // Endpoint for Pizza Palace menu
+        fetch('http://127.0.0.1:4002/menu?restaurantID=1') // Endpoint for Pizza Palace menu
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -31,14 +30,13 @@
             .then(menuItems => {
                 const list = document.getElementById('restaurant-list');
                 list.innerHTML = ''; // Clear previous entries
-                console.log(menuItems)
                 menuItems.forEach(menuItem => {
                     const item = document.createElement('li');
                     item.innerHTML = `
                         <h3>${menuItem.name}</h3>
                         <p>Description: ${menuItem.description}</p>
                         <p>Price: $${menuItem.price}</p>
-<button onclick="addToCart(${menuItem.itemid}, '${menuItem.name}', '${menuItem.description}', ${menuItem.price})">Add to Cart</button>
+                        <button onclick="addToCart(${menuItem.itemid}, '${menuItem.name}', '${menuItem.description}', ${menuItem.price})">Add to Cart</button>
                     `;
                     list.appendChild(item);
                 });
@@ -47,7 +45,6 @@
                 console.error('Error fetching menu:', error);
                 alert('Failed to load menu.');
             });
-        ;
 
         function addToCart(itemId, itemName, itemDescription, itemPrice) {
             console.log('Adding item to cart:', { itemId, itemName, itemDescription, itemPrice });

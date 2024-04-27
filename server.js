@@ -48,7 +48,7 @@ async function startServer() {
     const query = parsedUrl.query; // Extract the query string as an object
 
     res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500'); // Allows access specifically from your front-end
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); // Adjust if you use other methods
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS'); // Adjust if you use other methods
     res.setHeader('Access-Control-Allow-Headers', 'application/json'); // Adjust based on what headers your client sends
     res.setHeader('Content-Type', 'application/json'); // JSON response for all endpoints
 
@@ -364,21 +364,30 @@ async function startServer() {
       }
     }
     // Cart Functions
-    else if (pathname === '/cart/add' && method === 'POST') {
-      const { cartId, itemId, quantity } = query;
-      if (cartId && itemId && quantity) {
-        try {
-          const result = await addItemToCart(pool, cartId, itemId, quantity);
-          res.statusCode = 200;
-          res.end(JSON.stringify({ message: 'Item added to cart', result }));
-        } catch (error) {
-          res.statusCode = 500;
-          res.end(JSON.stringify({ error: error.message }));
-        }
-      } else {
-        res.statusCode = 400;
-        res.end(JSON.stringify({ error: 'Missing required parameters' }));
-      }
+    else if (req.url === '/cart/add' && req.method === 'POST') {
+      // Parse the incoming request body
+      let body = '';
+      req.on('data', chunk => {
+          body += chunk.toString();
+      });
+
+      req.on('end', async () => {
+          try {
+              // Parse JSON data from the request body
+              const { cartId, itemId, quantity } = JSON.parse(body);
+
+              // Add item to cart
+              const result = await addItemToCart(pool, cartId, itemId, quantity);
+
+              // Respond with success message
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ message: 'Item added to cart', result }));
+          } catch (error) {
+              // Respond with error message
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: error.message }));
+          }
+      });
     }
     else if (pathname === '/cart/delete' && method === 'DELETE') {
       const { cartId, itemId, quantity } = query;
