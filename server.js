@@ -198,7 +198,7 @@ async function startServer() {
       const restaurantID = query.restaurantID;
       if (restaurantID) {
         try {
-          const menu = await openMenu(pool, restaurantID);
+          const menu = await openMenu(pool, restaurantID, res);
           res.statusCode = 200;
           res.end(JSON.stringify(menu));
         } catch (error) {

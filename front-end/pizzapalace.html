@@ -20,7 +20,7 @@
         <ul id="restaurant-list"></ul>
         <script>
             document.getElementById('loadMenuButton').addEventListener('click', function() {
-                fetch('http://127.0.0.1:4002/menu?restaurantID=3') // Ensure your server endpoint matches
+                fetch('http://127.0.0.1:4002/menu?restaurantID=1') // Ensure your server endpoint matches
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

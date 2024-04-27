@@ -1,18 +1,25 @@
-//openMenu function. Function should open menu based on the restaurantID. 
-async function openMenu(pool, restaurantID) {
+async function openMenu(pool, restaurantID, res) { // Include `res` as a parameter
   let connection;
   try {
-    connection = await pool.getConnection(); // Get a connection from the pool
+    connection = await pool.getConnection();
     const query = 'SELECT * FROM MenuItem WHERE restaurantid = ?';
     const [results] = await connection.query(query, [restaurantID]);
 
-    // Assuming results is an array of menu items, we return it directly.
-    return results; // Directly return the array of menu items.
-  } catch (err) {
-    console.error("Error in openMenu: ", err);
-    throw err;
+    if (results.length === 0) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: "No items found" }));
+      return;
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(results));
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: "Internal server error", error: error.message }));
   } finally {
-    if (connection) connection.release(); // Release the connection back to the pool
+    if (connection) { // Use `connection` instead of `db`
+      connection.release();
+    }
   }
 }
 
