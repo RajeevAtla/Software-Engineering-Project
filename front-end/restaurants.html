@@ -17,25 +17,7 @@
         <h1>Our Restaurants</h1>
     </header>
     <div class="content" id="restaurantList">
-        <ol id="restaurant-list"></ol>
-        <script>
-            fetch('http://127.0.0.1:4002/api/restaurants/all')
-            .then(response => response.json())
-            .then(restaurants => {
-                const list = document.getElementById('restaurant-list');
-                restaurants.forEach(restaurant => {
-                    const item = document.createElement('li');
-                    item.textContent = restaurant.name;
-                    list.appendChild(item);
-                });
-            })
-            .catch(err => console.error('Error fetching data:', err));
-        </script>
-    </div>
-    <div>
-        <button onclick="location.href='pickupplus.html';"> Option 1</a>
-        <button onclick="location.href='papajohn.html';"> Option 2</button>
-        <button onclick="location.href='chipotle.html';"> Option 3</button>
+        <!-- Restaurants will be listed here -->
     </div>
     <footer>
         <p>Pickup Plus © 2024</p>

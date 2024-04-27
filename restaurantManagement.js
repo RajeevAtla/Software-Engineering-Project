@@ -131,7 +131,11 @@ async function getAllRestaurants(pool, req, res) {
   let db;
   try {
     db = await pool.getConnection(); // Get a connection from the pool
+<<<<<<< HEAD
     const [results] = await db.query('SELECT name FROM Restaurant'); // Execute the query to get all restaurants
+=======
+    const [results] = await db.query('SELECT * FROM Restaurant'); // Execute the query to get all restaurants
+>>>>>>> 417df6d (testing front end backend connection)
 
     if (results.length === 0) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -152,4 +156,8 @@ async function getAllRestaurants(pool, req, res) {
 }
 
 
+<<<<<<< HEAD
 module.exports = { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant, getAllRestaurants };
+=======
+module.exports = { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant };
+>>>>>>> 417df6d (testing front end backend connection)
