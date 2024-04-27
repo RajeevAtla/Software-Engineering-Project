@@ -18,39 +18,38 @@
     </div>
     <div>
         <ul id="cart">
-            <!-- Cart items will be dynamically loaded here -->
+            
         </ul>
         <strong>Total: $0</strong>
     </div>
 
     <script>
         // Example of fetching cart data
-        // Assume `fetchCartData` is a function that makes an API call to get the cart items
         function fetchCartData() {
             fetch('http://127.0.0.1:4002/cart/items', {
-                method: 'GET', // Specify the method
+                method: 'GET', 
                 headers: {
-                    'Content-Type': 'application/json' // Assuming the server expects JSON and also sends JSON
+                    'Content-Type': 'application/json'
                 }
             })
             .then(response => {
-                if (!response.ok) { // Check if the response status is OK (200-299)
+                if (!response.ok) { 
                     throw new Error('Network response was not ok');
                 }
-                return response.json(); // Parse JSON data from the response
+                return response.json(); 
             })
             .then(data => {
-                console.log('Cart data:', data); // Handle your data here
+                console.log('Cart data:', data); 
             })
             .catch(error => {
-                console.error('Failed to fetch cart data:', error); // Handle any errors
+                console.error('Failed to fetch cart data:', error); 
             });
             
         }
 
         function displayCart(items) {
             const cartList = document.getElementById('cart');
-            cartList.innerHTML = ''; // Clear existing items
+            cartList.innerHTML = '';
             let total = 0;
 
             items.forEach(item => {
