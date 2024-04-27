@@ -1,67 +1,142 @@
-body {
-    font-family: Arial, sans-serif;
+/* Reset styles */
+* {
     margin: 0;
     padding: 0;
-    background: #f4f4f4;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Nunito', sans-serif; /* Nunito font */
+    background-color: #f8f9fa; /* Light grey background */
+    color: #333; /* Dark grey text color */
 }
 
 .top-bar {
-    display: flex;
-    justify-content: flex-end;
-    background-color: #ff4500;
+    background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+    color: white; /* White text color for better contrast */
     padding: 10px 20px;
+    text-align: center;
 }
 
-.top-bar a {
-    color: white;
-    text-decoration: none;
+.tab {
+    display: inline-block;
+    margin: 0 10px;
     padding: 5px 10px;
-    font-size: 16px;
+    border-radius: 50%; /* Make the box circular */
+    border: 2px solid white; /* White border for contrast */
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+}
+
+.tab a {
+    color: white; /* White text color for better contrast */
+    text-decoration: none;
+}
+
+.tab:hover {
+    background-color: #3cb371; /* Change background color on hover */
+    color: white; /* Change text color on hover */
+    transform: scale(1.1); /* Scale effect on hover */
 }
 
 header {
-    background-color: #ff4500;
-    color: white;
-    padding: 10px 20px;
     text-align: center;
-    margin-top: 20px; /* space below the top-bar */
-}
-
-nav {
-    background: #333;
-    color: white;
-    text-align: center;
-    padding: 10px 0;
-}
-
-nav a {
-    color: white;
-    text-decoration: none;
-    padding: 10px 20px;
-    font-size: 18px;
+    padding: 50px 20px;
+    color: #3cb371; /* Green header text color */
+    animation: fadeIn 1s ease; /* Fade-in animation */
 }
 
 .hero {
-    background: url('');
-    background-size: cover;
-    height: 500px;
-    color: black;
+    text-align: center;
+    padding: 100px 20px;
 }
 
 .hero h1 {
-    padding: 150px 0;
-    text-align: center;
-    font-size: 48px;
+    font-size: 36px;
     font-weight: bold;
+    margin-bottom: 20px;
+    color: #333; /* Dark grey hero text color */
 }
 
-footer {
-    background-color: #333;
+.hero p {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.cta-button {
+    background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
     color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 25px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+    background: linear-gradient(to right, #00bfff, #3cb371); /* Gradient from blue to green on hover */
+    transform: translateY(-3px); /* Move button up on hover */
+}
+
+.footer {
+    background-color: #333; /* Dark grey footer background */
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* New CSS for the content section */
+.content-section {
+    font-family: 'Nunito', sans-serif; /* Nunito font */
+    background-color: white;
+    padding: 50px 20px;
+    text-align: center;
+    animation: fadeIn 1s ease; /* Fade-in animation */
+}
+
+.content-section h2 {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.content-section p {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+/* Adjusted CSS for navigation links */
+.nav-links {
+    font-family: 'Nunito', sans-serif; /* Nunito font */
+    color: white; /* White text color for better contrast */
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 18px;
+    font-weight: bold;
+    transition: color 0.3s ease; /* Smooth transition on hover */
+}
+
+.nav-links:hover {
+    color: #00bfff; /* Change text color on hover */
+}
+
+/* New CSS for bottom bar */
+.bottom-bar {
+    background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+    color: white; /* White text color for better contrast */
     text-align: center;
     padding: 10px 0;
     position: fixed;
-    left: 0;
     bottom: 0;
     width: 100%;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }

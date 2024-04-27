@@ -5,23 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Pickup Plus</title>
     <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .top-bar {
+            background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+
+        .tab {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 5px 10px;
+            border-radius: 50%; /* Make the box circular */
+            border: 2px solid #ffffff; /* White border for contrast */
+            transition: background-color 0.3s ease; /* Smooth transition on hover */
+        }
+
+        .tab a {
+            color: white; /* White text color for better contrast */
+            text-decoration: none;
+        }
+
+        .tab:hover {
+            background-color: #ffffff; /* Change background color on hover */
+            color: #3cb371; /* Change text color on hover */
+            transform: scale(1.1); /* Scale effect on hover */
+        }
+
+        header {
+            background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .container {
+            margin: 50px auto;
+            max-width: 400px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 20px); /* Adjusted width */
+            margin-left: auto; /* Centered */
+            margin-right: auto; /* Centered */
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background: linear-gradient(to right, #00bfff, #3cb371); /* Gradient from blue to green on hover */
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <div class="top-bar">
-        <a href="index.html">Home</a>
+        <div class="tab">
+            <a href="#">Home</a>
+        </div>
+        <div class="tab">
+            <a href="#">Restaurants</a>
+        </div>
+        <div class="tab">
+            <a href="#">About</a>
+        </div>
+        <div class="tab">
+            <a href="#">Login</a>
+        </div>
     </div>
     <header>
         <h1>Login to Pickup Plus</h1>
     </header>
-    <div class="container" style="margin-top: 50px; width: 300px; margin-left: auto; margin-right: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-        <form action="/submit-login" method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+    <div class="container">
+        <form action="/submit-login" method="POST">
             <label for="username">Username:</label>
             <input type="text" id="username" name="username" required>
             
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
             
-            <button type="submit" style="background-color: #ff4500; color: white; padding: 10px; border: none; cursor: pointer;">Login</button>
+            <button type="submit">Login</button>
         </form>
     </div>
     <footer>
