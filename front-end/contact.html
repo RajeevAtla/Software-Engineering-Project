@@ -14,6 +14,10 @@
         }
         .content {
             text-align: center; /* Center the content */
+            margin-bottom: 50px; /* Add vertical spacing */
+        }
+        .get-in-touch {
+            margin-bottom: 40px; /* Increased margin bottom */
         }
         label {
             display: block;
@@ -64,8 +68,10 @@
         <h1>Contact Us</h1>
     </header>
     <div class="content">
-        <h2>Get in Touch</h2>
-        <p>We're here to help and answer any question you might have. We look forward to hearing from you!</p>
+        <div class="get-in-touch">
+            <h2>Get in Touch</h2>
+            <p>We're here to help and answer any question you might have. We look forward to hearing from you!</p>
+        </div>
         <form action="/submit-contact" method="POST">
             <label for="name">Your Name:</label>
             <input type="text" id="name" name="name" required>
