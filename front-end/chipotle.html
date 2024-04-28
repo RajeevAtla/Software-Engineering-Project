@@ -4,7 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chipotle - Pickup Plus</title>
-    <link rel="stylesheet" href="restaurants_style.css">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        /* Additional CSS for the Chipotle page */
+        #menuList {
+            text-align: center; /* Center the menu items */
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px; /* Add padding for better readability */
+        }
+        #restaurant-list {
+            list-style-type: none; /* Remove bullet points from the list */
+            padding: 0;
+        }
+        #restaurant-list li {
+            margin-bottom: 20px; /* Add margin between menu items */
+            padding: 20px;
+            background-color: #f9f9f9; /* Light gray background color for menu items */
+            border-radius: 5px; /* Rounded corners for menu items */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add shadow for a card-like effect */
+        }
+        h3 {
+            color: #4CAF50; /* Green color for menu item names */
+        }
+        p {
+            color: #333; /* Dark gray color for menu item descriptions and prices */
+        }
+        button {
+            background-color: #4CAF50; /* Green color for Add to Cart button */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition on hover */
+        }
+        button:hover {
+            background-color: #45a049; /* Darker green color on hover */
+        }
+    </style>
 </head>
 <body>
     <div class="top-bar">
