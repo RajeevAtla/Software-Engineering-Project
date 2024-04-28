@@ -12,7 +12,7 @@ const {placeNewOrder, checkStatus, updateStatus, cancelOrder,} = require('./orde
 const {getCartItems,addItemToCart,deleteItemFromCart,clearCart} = require('./cartFunctions');
 const { openMenu, addItem, deleteItem, searchItems, listItemCategories, sortItemsByPrice, getItemsBelowPrice, parseMenuItemsFromPDF } = require('./menuFunctions');
 const { registerRestaurant, restaurantLogin, editRestaurant, deleteRestaurant, getAllRestaurants } = require('./restaurantManagement');
-const {registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken} = require('./userManagement');
+const {registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken, RegisterUserToDb} = require('./userManagement');
 
 const hostname = '127.0.0.1';
 const port = 4002;
@@ -40,6 +40,19 @@ async function startServer() {
     console.error('Failed to configure the database:', error);
     return; // Stop the server from starting
   }
+
+  // register a new test user
+  db = await pool.getConnection();
+  let test_user = {
+    firstname: "john",
+    lastname: "doe",
+    address:  "100 test st",
+    email:  "johndoe@example.com",
+    phonenumber: "1231231234",
+    password: "password",
+  };
+// async function RegisterUserToDb(db, { firstname, lastname, address, email, phonenumber, password }) {
+  RegisterUserToDb(pool, test_user);
 
   const server = http.createServer(async (req, res) => {
   
@@ -485,7 +498,10 @@ async function startServer() {
 
     // User registration
     else if (pathname === '/api/users/register' && method === 'POST') {
+
       await registerUser(pool, req, res);
+
+      
     }
     // User login, example route: /api/users/login/1 for user with userid 1
     else if (pathname === '/api/users/login' && method === 'POST') {
