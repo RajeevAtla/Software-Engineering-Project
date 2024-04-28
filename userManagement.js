@@ -19,15 +19,14 @@ async function registerUser(pool, req, res) {
       req.on('error', reject);
     });
 
-    // const { firstname, lastname, address, email, phonenumber, password } = JSON.parse(body);
-    // const hashedPassword = await bcrypt.hash(password, 10);
-    //
-    // db = await pool.getConnection();
-    // const [results] = await db.execute(
-    //   'INSERT INTO user (firstname, lastname, address, email, phonenumber, password) VALUES (?, ?, ?, ?, ?, ?)',
-    //   [firstname, lastname, address, email, phonenumber, hashedPassword]
-    // );
-    results = RegisterUserToDb(db, JSON.parse(body));
+    const { firstname, lastname, address, email, phonenumber, password } = JSON.parse(body);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    db = await pool.getConnection();
+    const [results] = await db.execute(
+      'INSERT INTO user (firstname, lastname, address, email, phonenumber, password) VALUES (?, ?, ?, ?, ?, ?)',
+      [firstname, lastname, address, email, phonenumber, hashedPassword]
+    );
 
     res.writeHead(201, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ userid: results.insertId, message: 'user registered successfully.' }));
@@ -39,24 +38,6 @@ async function registerUser(pool, req, res) {
     if (db) db.release(); // Release the connection if it was acquired
   }
 }
-
-async function RegisterUserToDb(pool, { firstname, lastname, address, email, phonenumber, password }) {
-  let db;
-  try{
-    db = await pool.getConnection();
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    db = await pool.getConnection();
-    const [results] = await db.execute(
-      'INSERT INTO user (firstname, lastname, address, email, phonenumber, password) VALUES (?, ?, ?, ?, ?, ?)',
-      [firstname, lastname, address, email, phonenumber, hashedPassword]
-    );
-  } finally {
-    if (db) db.release(); // Release the connection if it was acquired
-  }
-  return results;
-};
-
 async function userLogin(pool, req, res) {
   let db;
   try {
@@ -216,7 +197,7 @@ function verifyToken(token) {
   }
 }
 
-module.exports = { registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken, RegisterUserToDb };
+module.exports = { registerUser, userLogin, editUser, deleteUser, getuserId, verifyToken };
 
 
 //export ACCESS_TOKEN_SECRET='your_secret_key_here'

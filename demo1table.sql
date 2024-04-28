@@ -71,7 +71,7 @@ CREATE TABLE Orders (
 
 
 INSERT INTO User (userid, firstname, lastname, address, email, phonenumber, password, salt, role) VALUES
-(1, 'Jane', 'Doe', '123 Elm Street', 'jane.doe@example.com', '555-1234', 'hashed_password_here', 'salt_here', 'customer');
+(1, 'Jane', 'Doe', '123 Elm Street', 'jane.doe@example.com', '555-1234', '$2b$10$nqPedIbYK4Fe3lXsljUeZ.ZbDyVmzJuNlXnA/jN9gPpP9b/0C2gV2', 'salt_here', 'customer');
 
 -- Populate table with some example restaurants
 INSERT INTO Restaurant (restaurantid, name, address, email, phonenumber, category) VALUES
