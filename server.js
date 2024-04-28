@@ -36,13 +36,7 @@ async function startServer() {
   try {
     pool = await configureDatabase();
     console.log('Database configured and pool created.');
-  } catch (error) {
-    console.error('Failed to configure the database:', error);
-    return; // Stop the server from starting
-  }
-
-  // register a new test user
-  db = await pool.getConnection();
+    // register a new test user
   let test_user = {
     firstname: "john",
     lastname: "doe",
@@ -54,7 +48,13 @@ async function startServer() {
 // async function RegisterUserToDb(db, { firstname, lastname, address, email, phonenumber, password }) {
   RegisterUserToDb(pool, test_user);
 
-  const server = http.createServer(async (req, res) => {
+
+  } catch (error) {
+    console.error('Failed to configure the database:', error);
+    return; // Stop the server from starting
+  }
+
+    const server = http.createServer(async (req, res) => {
   
 
     const parsedUrl = url.parse(req.url, true); // Parse the URL of the request

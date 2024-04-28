@@ -40,7 +40,10 @@ async function registerUser(pool, req, res) {
   }
 }
 
-async function RegisterUserToDb(db, { firstname, lastname, address, email, phonenumber, password }) {
+async function RegisterUserToDb(pool, { firstname, lastname, address, email, phonenumber, password }) {
+  let db;
+  try{
+    db = await pool.getConnection();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     db = await pool.getConnection();
@@ -48,6 +51,9 @@ async function RegisterUserToDb(db, { firstname, lastname, address, email, phone
       'INSERT INTO user (firstname, lastname, address, email, phonenumber, password) VALUES (?, ?, ?, ?, ?, ?)',
       [firstname, lastname, address, email, phonenumber, hashedPassword]
     );
+  } finally {
+    if (db) db.release(); // Release the connection if it was acquired
+  }
   return results;
 };
 
