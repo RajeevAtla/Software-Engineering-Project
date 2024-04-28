@@ -16,55 +16,97 @@
         <div class="tab"><a href="login.html">Login</a></div>
         <div class="tab"><a href="cart.html">Cart</a></div>
     </div>
-    <div>
-        <ul id="cart">
-            
-        </ul>
-        <strong>Total: $0</strong>
+    <div id="cart-items">
+        <!-- Cart items will be displayed here dynamically -->
     </div>
 
     <script>
-        // Example of fetching cart data
-        function fetchCartData() {
-            fetch('http://127.0.0.1:4002/cart/items', {
-                method: 'GET', 
-                headers: {
-                    'Content-Type': 'application/json'
+        async function fetchCartData() {
+            try {
+                const response = await fetch('http://127.0.0.1:4002/cart/items?cartId=1'); // Adjust cartId as needed
+                if (!response.ok) {
+                    throw new Error('Failed to fetch cart data');
                 }
-            })
-            .then(response => {
-                if (!response.ok) { 
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); 
-            })
-            .then(data => {
-                console.log('Cart data:', data); 
-            })
-            .catch(error => {
-                console.error('Failed to fetch cart data:', error); 
-            });
-            
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Failed to fetch cart data:', error.message);
+                return [];
+            }
         }
 
-        function displayCart(items) {
-            const cartList = document.getElementById('cart');
-            cartList.innerHTML = '';
-            let total = 0;
-
-            items.forEach(item => {
-                total += item.price * item.quantity;
-                const li = document.createElement('li');
-                li.textContent = `${item.name} - $${item.price} x ${item.quantity}`;
-                cartList.appendChild(li);
-            });
-
-            document.querySelector('strong').textContent = 'Total: $' + total;
+        async function displayCartItems() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            try {
+                const cartItems = await fetchCartData();
+                if (cartItems.length > 0) {
+                    cartItemsContainer.innerHTML = ''; // Clear previous items
+                    cartItems.forEach(item => {
+                        const itemElement = document.createElement('div');
+                        itemElement.textContent = `${item.name}: $${item.price} x ${item.quantity}`;
+                        cartItemsContainer.appendChild(itemElement);
+                        // Add a button to delete the item
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.addEventListener('click', async () => {
+                            await deleteCartItem(item.Id); // Call deleteCartItem function with the item ID
+                            displayCartItems(); // Refresh the cart after deleting
+                        });
+                        itemElement.appendChild(deleteButton);
+                    });
+                    const totalCost = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+                    const totalElement = document.createElement('div');
+                    totalElement.textContent = `Total: $${totalCost}`;
+                    cartItemsContainer.appendChild(totalElement);
+                } else {
+                    cartItemsContainer.textContent = 'No items in the cart';
+                }
+            } catch (error) {
+                console.error('Error displaying cart items:', error.message);
+                cartItemsContainer.textContent = 'Failed to load cart items';
+            }
         }
 
-        fetchCartData().then(items => {
-            displayCart(items);
+        async function deleteCartItem(itemId) {
+    try {
+        const response = await fetch(`http://127.0.0.1:4002/cart/delete?cartId=1&itemId=${itemId}`, {
+            method: 'DELETE'
         });
+        if (!response.ok) {
+            throw new Error('Failed to delete item from cart');
+        }
+        console.log('Item deleted successfully');
+        // Refresh cart items after deletion
+        displayCartItems();
+    } catch (error) {
+        console.error('Error deleting item from cart:', error.message);
+    }
+}
+
+        async function addItemToCart(itemId, quantity) {
+            try {
+                const response = await fetch(`http://127.0.0.1:4002/cart/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        cartId: 1, // Adjust cartId as needed
+                        itemId: itemId,
+                        quantity: quantity
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to add item to cart');
+                }
+            } catch (error) {
+                console.error('Error adding item to cart:', error.message);
+            }
+        }
+
+        // Example usage: addItemToCart(123, 2); // Add 2 items of item with ID 123 to the cart
+
+        displayCartItems();
     </script>
 </body>
 </html>

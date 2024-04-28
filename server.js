@@ -42,20 +42,24 @@ async function startServer() {
   }
 
   const server = http.createServer(async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500'); // Allows access specifically from your front-end
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); // Adjust if you use other methods
-    res.setHeader('Access-Control-Allow-Headers', 'application/json'); // Adjust based on what headers your client sends
-    res.setHeader('Content-Type', 'application/json'); // JSON response for all endpoints
+  
 
     const parsedUrl = url.parse(req.url, true); // Parse the URL of the request
     const pathname = parsedUrl.pathname; // Get the pathname
     const method = req.method; // Get the HTTP method
     const query = parsedUrl.query; // Extract the query string as an object
 
-    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500'); // Allows access specifically from your front-end
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS'); // Adjust if you use other methods
-    res.setHeader('Access-Control-Allow-Headers', 'application/json'); // Adjust based on what headers your client sends
-    res.setHeader('Content-Type', 'application/json'); // JSON response for all endpoints
+    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Content-Type', 'application/json');
+
+    // Handle OPTIONS method for CORS preflight
+    if (method === 'OPTIONS') {
+        res.writeHead(204); // No Content
+        res.end();
+        return;
+    }
 
     // Handling for /api/orders route from the first server
     if (pathname === '/api/orders' && method === 'POST') {
@@ -412,36 +416,73 @@ async function startServer() {
     }
     else if (pathname === '/cart/items' && method === 'GET') {
       const cartId = query.cartId;
-      if (cartId) {
-        try {
+
+      console.log("Received cartId:", cartId); // Log to see what's actually received
+
+      if (!cartId) {
+          console.error("Missing 'cartId' parameter");
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing cartId parameter' }));
+          return;
+      }
+
+      if (isNaN(parseInt(cartId))) {
+          console.error(`Invalid 'cartId' parameter: ${cartId}`);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid cartId parameter' }));
+          return;
+      }
+
+      try {
           const items = await getCartItems(pool, cartId);
-          res.statusCode = items.length > 0 ? 200 : 404;
-          res.end(JSON.stringify(items.length > 0 ? items : { error: "No items found in the cart" }));
-        } catch (error) {
-          res.statusCode = 500;
-          res.end(JSON.stringify({ error: error.message }));
-        }
-      } else {
-        res.statusCode = 400;
-        res.end(JSON.stringify({ error: 'Missing cartId parameter' }));
+          if (items.length > 0) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(items));
+          } else {
+              res.writeHead(404, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: "No items found in the cart" }));
+          }
+      } catch (error) {
+          console.error("Failed to fetch items:", error);  // Better error logging
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error', message: error.message }));
       }
-    }
-    else if (pathname === '/cart/clear' && method === 'DELETE') {
-      const cartId = query.cartId;
-      if (cartId) {
-        try {
-          const result = await clearCart(pool, cartId);
-          res.statusCode = 200;
-          res.end(JSON.stringify({ message: 'Cart cleared', result }));
-        } catch (error) {
-          res.statusCode = 500;
-          res.end(JSON.stringify({ error: error.message }));
-        }
-      } else {
-        res.statusCode = 400;
+  }
+  else if (pathname === '/cart/clear' && method === 'DELETE') {
+    const cartId = query.cartId;
+
+    console.log("Received cartId:", cartId); // Log to see what's actually received
+
+    if (!cartId) {
+        console.error("Missing 'cartId' parameter");
+        res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Missing cartId parameter' }));
-      }
+        return;
     }
+
+    if (isNaN(parseInt(cartId))) {
+        console.error(`Invalid 'cartId' parameter: ${cartId}`);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid cartId parameter' }));
+        return;
+    }
+
+    try {
+        const result = await clearCart(pool, cartId);
+        if (result) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Cart cleared', result }));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: "No items found in the cart" }));
+        }
+    } catch (error) {
+        console.error("Failed to clear cart:", error); // Better error logging
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal server error', message: error.message }));
+    }
+}
+
     // User registration
     else if (pathname === '/api/users/register' && method === 'POST') {
       await registerUser(pool, req, res);
