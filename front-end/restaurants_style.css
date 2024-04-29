@@ -7,10 +7,30 @@ body {
 }
 
 .top-bar {
-    display: flex;
-    justify-content: space-between;
-    background-color: #ff4500;
+    background: linear-gradient(to right, #3cb371, #00bfff); /* Gradient from green to blue */
+    color: white; /* White text color for better contrast */
     padding: 10px 20px;
+    text-align: center;
+}
+
+.tab {
+    display: inline-block;
+    margin: 0 10px;
+    padding: 5px 10px;
+    border-radius: 50%; /* Make the box circular */
+    border: 2px solid white; /* White border for contrast */
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+}
+
+.tab a {
+    color: white; /* White text color for better contrast */
+    text-decoration: none;
+}
+
+.tab:hover {
+    background-color: #3cb371; /* Change background color on hover */
+    color: white; /* Change text color on hover */
+    transform: scale(1.1); /* Scale effect on hover */
 }
 
 .top-bar a {
