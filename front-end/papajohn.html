@@ -4,7 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Papa John's - Pickup Plus</title>
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="restaurants_style.css">
+    <style>
+        /* Additional CSS for the Chipotle page */
+        #menuList {
+            text-align: center; /* Center the menu items */
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px; /* Add padding for better readability */
+        }
+        #restaurant-list {
+            list-style-type: none; /* Remove bullet points from the list */
+            padding: 0;
+        }
+        #restaurant-list li {
+            margin-bottom: 20px; /* Add margin between menu items */
+            padding: 20px;
+            background-color: #f9f9f9; /* Light gray background color for menu items */
+            border-radius: 5px; /* Rounded corners for menu items */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add shadow for a card-like effect */
+        }
+        h3 {
+            color: #4CAF50; /* Green color for menu item names */
+        }
+        p {
+            color: #333; /* Dark gray color for menu item descriptions and prices */
+        }
+        button {
+            background-color: #4CAF50; /* Green color for Add to Cart button */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition on hover */
+        }
+        button:hover {
+            background-color: #45a049; /* Darker green color on hover */
+        }
+    </style>
 </head>
 <body>
     <div class="top-bar">
@@ -13,6 +51,7 @@
         <div class="tab"><a href="login.html">Login</a></div>
         <div class="tab"><a href="about.html">About</a></div>
         <div class="tab"><a href="contact.html">Contact</a></div>
+        <div class="tab"><a href="cart.html">Cart</a></div>
     </div>
     <header>
         <h1>Papa John's Menu</h1>
@@ -47,10 +86,50 @@
                 alert('Failed to load menu.');
             });
 
-        function addToCart(itemId, itemName, itemDescription, itemPrice) {
-            console.log('Adding item to cart:', { itemId, itemName, itemDescription, itemPrice });
-            // Here you can perform the logic to add the item to the cart
-        }
+            function addToCart(itemId, itemName, itemDescription, itemPrice) {
+        console.log("Adding item to cart:", {
+          itemId,
+          itemName,
+          itemDescription,
+          itemPrice,
+        });
+        // Here you can perform the logic to add the item to the cart
+
+        const apiUrl = "http://127.0.0.1:4002/cart/add";
+
+        const data = {
+          cartId: 1,
+          itemId: itemId,
+          quantity: 1,
+        };
+
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        };
+
+        fetch(apiUrl, requestOptions)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to add item to cart");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Handle successful response from the server
+            console.log("Item added to cart successfully:", data);
+            alert("Item added to cart successfully!");
+          })
+          .catch((error) => {
+            // Handle errors
+            console.error("Error adding item to cart:", error);
+            alert("Failed to add item to cart. Please try again later.");
+          });
+      }
+
     </script>
     
     <footer>

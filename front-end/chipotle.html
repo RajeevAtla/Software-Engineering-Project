@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chipotle - Pickup Plus</title>
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="restaurants_style.css">
     <style>
         /* Additional CSS for the Chipotle page */
         #menuList {
@@ -86,10 +86,49 @@
                 alert('Failed to load menu.');
             });
 
-        function addToCart(itemId, itemName, itemDescription, itemPrice) {
-            console.log('Adding item to cart:', { itemId, itemName, itemDescription, itemPrice });
-            // Here you can perform the logic to add the item to the cart
-        }
+            function addToCart(itemId, itemName, itemDescription, itemPrice) {
+        console.log("Adding item to cart:", {
+          itemId,
+          itemName,
+          itemDescription,
+          itemPrice,
+        });
+        // Here you can perform the logic to add the item to the cart
+
+        const apiUrl = "http://127.0.0.1:4002/cart/add";
+
+        const data = {
+          cartId: 1,
+          itemId: itemId,
+          quantity: 1,
+        };
+
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        };
+
+        fetch(apiUrl, requestOptions)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to add item to cart");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Handle successful response from the server
+            console.log("Item added to cart successfully:", data);
+            alert("Item added to cart successfully!");
+          })
+          .catch((error) => {
+            // Handle errors
+            console.error("Error adding item to cart:", error);
+            alert("Failed to add item to cart. Please try again later.");
+          });
+      }
     </script>
     
     <footer>

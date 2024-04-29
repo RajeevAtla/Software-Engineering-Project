@@ -1,60 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pizza Palace - Pickup Plus</title>
-    <link rel="stylesheet" href="index.css">
-</head>
-<body>
+    <link rel="stylesheet" href="restaurants_style.css" />
+    <style>
+        /* Additional CSS for the Chipotle page */
+        #menuList {
+            text-align: center; /* Center the menu items */
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px; /* Add padding for better readability */
+        }
+        #restaurant-list {
+            list-style-type: none; /* Remove bullet points from the list */
+            padding: 0;
+        }
+        #restaurant-list li {
+            margin-bottom: 20px; /* Add margin between menu items */
+            padding: 20px;
+            background-color: #f9f9f9; /* Light gray background color for menu items */
+            border-radius: 5px; /* Rounded corners for menu items */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add shadow for a card-like effect */
+        }
+        h3 {
+            color: #4CAF50; /* Green color for menu item names */
+        }
+        p {
+            color: #333; /* Dark gray color for menu item descriptions and prices */
+        }
+        button {
+            background-color: #4CAF50; /* Green color for Add to Cart button */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition on hover */
+        }
+        button:hover {
+            background-color: #45a049; /* Darker green color on hover */
+        }
+    </style>
+  </head>
+  <body>
     <div class="top-bar">
-        <div class="tab"><a href="index.html">Home</a></div>
-        <div class="tab"><a href="login.html">Login</a></div>
-        <div class="tab"><a href="about.html">About</a></div>
-        <div class="tab"><a href="contact.html">Contact</a></div>
+      <div class="tab"><a href="index.html">Home</a></div>
+      <div class="tab"><a href="restaurants.html">Restaurants</a></div>
+      <div class="tab"><a href="login.html">Login</a></div>
+      <div class="tab"><a href="about.html">About</a></div>
+      <div class="tab"><a href="contact.html">Contact</a></div>
+      <div class="tab"><a href="cart.html">Cart</a></div>
     </div>
     <header>
-        <h1>Pizza Palace Menu</h1>
+      <h1>Pizza Palace Menu</h1>
     </header>
     <div class="content" id="menuList">
-        <ul id="restaurant-list"></ul>
+      <ul id="restaurant-list"></ul>
     </div>
     <script>
-        fetch('http://127.0.0.1:4002/menu?restaurantID=1') // Endpoint for Pizza Palace menu
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(menuItems => {
-                const list = document.getElementById('restaurant-list');
-                list.innerHTML = ''; // Clear previous entries
-                menuItems.forEach(menuItem => {
-                    const item = document.createElement('li');
-                    item.innerHTML = `
+      fetch("http://127.0.0.1:4002/menu?restaurantID=1") // Endpoint for Pizza Palace menu
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((menuItems) => {
+          const list = document.getElementById("restaurant-list");
+          list.innerHTML = ""; // Clear previous entries
+          menuItems.forEach((menuItem) => {
+            const item = document.createElement("li");
+            item.innerHTML = `
                         <h3>${menuItem.name}</h3>
                         <p>Description: ${menuItem.description}</p>
                         <p>Price: $${menuItem.price}</p>
                         <button onclick="addToCart(${menuItem.itemid}, '${menuItem.name}', '${menuItem.description}', ${menuItem.price})">Add to Cart</button>
                     `;
-                    list.appendChild(item);
-                });
-            })
-            .catch(error => {
-                console.error('Error fetching menu:', error);
-                alert('Failed to load menu.');
-            });
-
-        function addToCart(itemId, itemName, itemDescription, itemPrice) {
-            console.log('Adding item to cart:', { itemId, itemName, itemDescription, itemPrice });
-            // Here you can perform the logic to add the item to the cart
+            list.appendChild(item);
             
-        }
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching menu:", error);
+          alert("Failed to load menu.");
+        });
+
+      function addToCart(itemId, itemName, itemDescription, itemPrice) {
+        console.log("Adding item to cart:", {
+          itemId,
+          itemName,
+          itemDescription,
+          itemPrice,
+        });
+        // Here you can perform the logic to add the item to the cart
+
+        const apiUrl = "http://127.0.0.1:4002/cart/add";
+
+        const data = {
+          cartId: 1,
+          itemId: itemId,
+          quantity: 1,
+        };
+
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        };
+
+        fetch(apiUrl, requestOptions)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to add item to cart");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Handle successful response from the server
+            console.log("Item added to cart successfully:", data);
+            alert("Item added to cart successfully!");
+          })
+          .catch((error) => {
+            // Handle errors
+            console.error("Error adding item to cart:", error);
+            alert("Failed to add item to cart. Please try again later.");
+          });
+      }
     </script>
-    
+
     <footer>
-        <p>Pickup Plus © 2024</p>
+      <p>Pickup Plus © 2024</p>
     </footer>
-</body>
+  </body>
 </html>
