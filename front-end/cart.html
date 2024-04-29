@@ -65,6 +65,7 @@
                           const totalElement = document.createElement('div');
                           totalElement.textContent = `Total: $${totalCost}`;
                           cartItemsContainer.appendChild(totalElement);
+                          localStorage.setItem('totalCost', totalCost); // Save total price for payment.html
                       } else {
                           cartItemsContainer.textContent = 'No items in the cart';
                       }
@@ -115,6 +116,19 @@
               // Example usage: addItemToCart(123, 2); // Add 2 items of item with ID 123 to the cart
               
               displayCartItems();
+
+function proceedToCheckout() {
+  window.location.href = '/payment.html'; // Redirect to payment page
+}
+</script>
+</head>
+<body>
+<h1>Your Cart</h1>
+<div id="cart-contents">
+  <!-- Cart items will be loaded here -->
+</div>
+<p id="total-price"></p>
+<button onclick="proceedToCheckout()">Checkout</button>
     </script>
   </body>
 </html>
