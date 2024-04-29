@@ -5,7 +5,7 @@ async function getCartItems(pool, cartId) {
 
         // Query to fetch cart items along with details from MenuItem table
         const query = `
-            SELECT ci.cartitemid, ci.quantity, mi.name, mi.description, mi.price
+            SELECT ci.cartitemid, ci.itemid, ci.quantity, mi.name, mi.description, mi.price
             FROM CartItems ci
             INNER JOIN MenuItem mi ON ci.itemid = mi.itemid
             WHERE ci.cartid = ?;
